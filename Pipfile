@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 jupyterlab = "*"
-torch = "==2.0"
+torch = "==2.2.0"
 transformers = "==4.27.1"
 datasets = "==2.16.1"
 accelerate = "==0.17.1"
@@ -13,6 +13,16 @@ evaluate = "==0.4.0"
 tensorboard = "==2.15.1"
 scikit-learn = "==1.4.0"
 sentence-transformers = "==2.2.2"
+python-dotenv = "==1.0.1"
+psycopg2-binary = "==2.9.9"
+pgvector = "==0.2.4"
+sacremoses = "==0.1.1"
+optimum = "==1.9.0"
+onnxruntime = "==1.15.1"
+onnx = "==1.14.0"
+fairseq = "==0.12.2"
+torchviz = "*"
+fastbpe = "0.1.0"
 
 [dev-packages]
 
