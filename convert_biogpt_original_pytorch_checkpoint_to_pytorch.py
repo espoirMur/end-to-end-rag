@@ -19,6 +19,7 @@ import json
 import os
 import re
 import shutil
+from typing import Any, Mapping
 
 import torch
 
@@ -27,13 +28,14 @@ from transformers.models.biogpt.tokenization_biogpt import VOCAB_FILES_NAMES
 from transformers.tokenization_utils_base import TOKENIZER_CONFIG_FILE
 from transformers.utils import WEIGHTS_NAME, logging
 
-
 logging.set_verbosity_warning()
 
 json_indent = 2
 
 
 # modified from https://github.com/facebookresearch/fairseq/blob/dd74992d0d143155998e9ed4076826bcea80fb06/fairseq/data/dictionary.py#L18
+
+
 class Dictionary:
     """A mapping from symbols to consecutive integers"""
 
@@ -225,12 +227,6 @@ def convert_biogpt_checkpoint_to_pytorch(biogpt_checkpoint_path, pytorch_dump_fo
         "vocab_size": src_vocab_size,
     }
 
-    # good hparam defaults to start with
-
-    print(f"Generating {biogpt_model_config_file}")
-    with open(biogpt_model_config_file, "w", encoding="utf-8") as f:
-        f.write(json.dumps(model_conf, ensure_ascii=False, indent=json_indent))
-
     # tokenizer config
     biogpt_tokenizer_config_file = os.path.join(
         pytorch_dump_folder_path, TOKENIZER_CONFIG_FILE)
@@ -251,22 +247,12 @@ def convert_biogpt_checkpoint_to_pytorch(biogpt_checkpoint_path, pytorch_dump_fo
 
     # model
     model_state_dict = chkpt["model"]
-
     # remove unneeded keys
     ignore_keys = [
         "decoder.version",
     ]
     for k in ignore_keys:
         model_state_dict.pop(k, None)
-
-    # For some reason there are nine extras words in the embeddings layers that are not in the vocabulary.
-    # Those words are at the end of the embeddings layer and are not in the dictionary.
-    # We remove them here.
-    model_state_dict["decoder.embed_tokens.weight"] = model_state_dict["decoder.embed_tokens.weight"][:src_vocab_size]
-
-    # we do the same for the output projection layer
-    model_state_dict["decoder.output_projection.weight"] = model_state_dict[
-        "decoder.output_projection.weight"][:src_vocab_size]
 
     layer_names = list(model_state_dict.keys())
     for layer_name in layer_names:
@@ -276,17 +262,30 @@ def convert_biogpt_checkpoint_to_pytorch(biogpt_checkpoint_path, pytorch_dump_fo
         else:
             model_state_dict[layer_name.replace(
                 "decoder", "biogpt")] = model_state_dict.pop(layer_name)
+
+    # For the prompt model, the vocab size is large than the original model.
+    if model_state_dict["biogpt.embed_tokens.weight"].shape[0] > src_vocab_size and model_state_dict["output_projection.weight"].shape[0] > src_vocab_size:
+        shape_difference = model_state_dict["biogpt.embed_tokens.weight"].shape[0] - src_vocab_size
+    else:
+        shape_difference = 0
+    model_conf["vocab_size"] = model_conf["vocab_size"] + shape_difference
+    print(f"Generating {biogpt_model_config_file}")
+    with open(biogpt_model_config_file, "w", encoding="utf-8") as f:
+        f.write(json.dumps(model_conf, ensure_ascii=False, indent=json_indent))
+
     config = BioGptConfig.from_pretrained(pytorch_dump_folder_path)
+    print("the voacb size is", config.vocab_size)
     model_new = BioGptForCausalLM(config)
 
     # check that it loads ok
     model_new.load_state_dict(model_state_dict)
 
+    new_state_dict = model_new.state_dict()
     # save
     pytorch_weights_dump_path = os.path.join(
         pytorch_dump_folder_path, WEIGHTS_NAME)
     print(f"Generating {pytorch_weights_dump_path}")
-    torch.save(model_state_dict, pytorch_weights_dump_path)
+    torch.save(new_state_dict, pytorch_weights_dump_path)
 
     print("Conversion is done!")
 

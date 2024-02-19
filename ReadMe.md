@@ -20,6 +20,9 @@ We will be using the following elements:
 - Infrastructure:
  https://www.runpod.io/console/gpu-cloud
 
+ - https://blog.griddynamics.com/retrieval-augmented-generation-llm/
+ 
+
 On deployment with triton server...
 
 This is not a research paper is it an engineer implementation, of an ML system to see if things will work in Production... 
