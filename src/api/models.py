@@ -4,7 +4,8 @@ from urllib.parse import quote
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, Field, Text
+from sqlalchemy import Column, Integer, text, Text
+from sqlalchemy.orm import mapped_column
 from pgvector.sqlalchemy import Vector
 from typing import List
 
@@ -19,13 +20,22 @@ DATABASE_URL = f'postgresql+psycopg2://{database_user}:{quote(database_password)
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 session = Session()
+session.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
 Base = declarative_base()
 
+VECTOR_LENGTH = 1024
 
 
 class VectorModel(Base):
-    __tablename__ = 'vectors'
+    __tablename__ = 'pubmed_qa'
     id: int = Column(Integer, primary_key=True)
     context: str = Column(Text)
-    context_vector: List[float] = Field(default=None, sa_column=Column(Vector(1536)))
-    
+    context_vector = mapped_column(Vector(VECTOR_LENGTH))
+
+    def __len__(self) -> int:
+        """conveniance method to get the length of the vector
+
+        Returns:
+            _type_: _description_
+        """
+        return VECTOR_LENGTH
