@@ -23,6 +23,7 @@ onnx = "==1.14.0"
 torchviz = "*"
 fastbpe = "0.1.0"
 fairseq = "==0.12.2"
+tritonclient = {version = "==2.42.0", extras = ["grpc", "http"]}
 
 [dev-packages]
 
