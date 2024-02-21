@@ -1,0 +1,45 @@
+FROM python:3.10 as base
+LABEL maintainer="Espoir Murhabazi<espoir.mur [] gmail>"
+
+
+# Never prompt the user for choices on installation/configuration of packages
+ENV DEBIAN_FRONTEND noninteractive
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 
+
+ENV PYROOT /pyroot
+ENV PYTHONUSERBASE $PYROOT
+
+FROM base AS python-deps
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        curl \
+        build-essential\
+        software-properties-common
+COPY Pipfile Pipfile.lock ./
+RUN python -m pip install --upgrade pip
+RUN pip install pipenv 
+RUN PIP_USER=1 pipenv install --categories=api --system --deploy
+
+FROM base AS runtime
+RUN echo ${PWD} && ls -lR
+COPY --from=python-deps $PYROOT/lib $PYROOT/lib
+COPY --from=python-deps $PYROOT/bin $PYROOT/bin
+
+RUN useradd --create-home es.py
+RUN mkdir /home/api
+ENV WORKING_DIR=/home/fastapi/
+ENV  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+ENV PATH="$PYROOT/bin:$PATH"
+ENV PYTHONPATH="${PYTHONPATH}:${WORKING_DIR}"
+COPY src/api ${WORKING_DIR}/api
+WORKDIR ${WORKING_DIR}
+RUN chown -R es.py:es.py ${WORKING_DIR}
+RUN chmod -R 755 ${WORKING_DIR}
+USER es.py
+EXPOSE 80
+# 
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "80"]

@@ -7,7 +7,7 @@ We will be using the following elements:
 
 - https://huggingface.co/michiyasunaga/BioLinkBERT-large:  As language model to use to learn embedding for both question and paragraphs
 - https://huggingface.co/datasets/pubmed_qa/viewer/pqa_unlabeled?row=0: the dataset to use as it contains the questions and the paragraphs..
-- for the generative model to use to generate answers will be : https://github.com/stanford-crfm/BioMedLM
+- For the generative model to use to generate answers will be : https://github.com/stanford-crfm/BioMedLM
 - Another tutorial to use : https://www.anyscale.com/blog/a-comprehensive-guide-for-building-rag-based-llm-applications-part-1
 - https://aws.amazon.com/blogs/database/building-ai-powered-search-in-postgresql-using-amazon-sagemaker-and-pgvector/
 - Use this https://www.backblaze.com/sign-up/cloud-storage?referrer=pricing for cloud storage
@@ -27,3 +27,12 @@ On deployment with triton server...
 
 This is not a research paper is it an engineer implementation, of an ML system to see if things will work in Production... 
 
+
+
+Renaming Task:
+
+- Build the Generative Model
+- Deploy it with Triton, opitmize 
+- Setup KubeFlow 
+- Setup design the kubernetes components.
+- Document the whole process.
