@@ -32,6 +32,7 @@ This is not a research paper is it an engineer implementation, of an ML system t
 Renaming Task:
 
 - Build the Generative Model
+- Deploy generative ai and set it container
 - Deploy it with Triton, opitmize 
 - Setup KubeFlow 
 - Setup design the kubernetes components.

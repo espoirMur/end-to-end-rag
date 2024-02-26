@@ -3,6 +3,6 @@
 FROM nvcr.io/nvidia/tritonserver:23.06-py3
 
 # Install the required Python packages
-RUN pip install transformers==4.27.1
+RUN pip install transformers==4.27.1 sacremoses==0.1.1
 
 

@@ -25,7 +25,6 @@ RUN pip install pipenv
 RUN PIP_USER=1 pipenv install --categories=api --system --deploy
 
 FROM base AS runtime
-RUN echo ${PWD} && ls -lR
 COPY --from=python-deps $PYROOT/lib $PYROOT/lib
 COPY --from=python-deps $PYROOT/bin $PYROOT/bin
 
