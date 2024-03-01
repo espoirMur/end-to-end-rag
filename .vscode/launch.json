@@ -7,6 +7,13 @@
       "request": "launch",
       "module": "uvicorn",
       "args": ["src.api.main:app", "--reload"]
+    },
+    {
+      "name": "Python: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal"
     }
   ]
 }
