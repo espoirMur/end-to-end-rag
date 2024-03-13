@@ -1,0 +1,20 @@
+name:"tokenizer_decoder"
+backend:"python"
+
+input [
+    {
+        name:"sequences",
+        data_type:TYPE_INT32,
+        dims:[-1,-1,-1]
+    }
+]
+
+output:[
+    {
+        name:"sequences_text",
+        data_type:TYPE_STRING,
+        dims:[-1, -1, -1]
+    }
+]
+
+instance_group [{ kind: KIND_CPU }]

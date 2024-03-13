@@ -1,0 +1,32 @@
+
+name: "embedding_model"
+platform: "onnxruntime_onnx"
+backend: "onnxruntime"
+default_model_filename: "bio-bert-embedder.onnx"
+max_batch_size: 0
+input [
+  {
+    name: "input_ids"
+    data_type: TYPE_INT64
+    dims: [ -1, -1 ]
+  },
+{
+    name: "attention_mask"
+    data_type: TYPE_INT64
+    dims: [ -1, -1 ]
+  }
+]
+output [
+  {
+    name: "3391"  # not sure why this is name 3391, need to double check
+    data_type: TYPE_FP32
+    dims: [ -1, 1024 ]
+  }
+]
+
+instance_group [
+    {
+      count: 1
+      kind: KIND_CPU
+    }
+]

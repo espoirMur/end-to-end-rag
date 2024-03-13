@@ -2,4 +2,4 @@
 **ipynb_checkpoints**
 datasets/**
 **/models/**
-**/models_repository/**
+models_repository/**/*.onnx

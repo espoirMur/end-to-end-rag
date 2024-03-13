@@ -1,0 +1,80 @@
+name: "ensemble_model"
+max_batch_size: 0
+platform: "ensemble"
+
+# Input to the model
+input [
+{
+    name: "TEXT"
+    data_type: TYPE_STRING
+    dims: [ -1 ]
+    # -1 means dynamic axis, aka this dimension may change
+}
+]
+
+# Output of the model
+output {
+    name: "sequences_text"
+    data_type: TYPE_STRING
+    dims: [-1, -1, -1]
+}
+
+# Type of scheduler to be used
+ensemble_scheduling {
+    step [
+        {
+            model_name: "tokenizer_encoder"
+            model_version: -1
+            input_map {
+                key: "TEXT"
+                value: "TEXT"
+            }
+            output_map [
+                {
+                    key: "input_ids"
+                    value: "input_ids"
+                },
+                { key: "max_length", value: "max_length" },
+                { key: "min_length", value: "min_length" },
+                { key: "num_beams", value: "num_beams" },
+                { key: "num_return_sequences", value: "num_return_sequences" },
+                { key: "length_penalty", value: "length_penalty" },
+                { key: "repetition_penalty", value: "repetition_penalty" }
+            ]
+        },
+        {
+            model_name: "generator_model"
+            model_version: -1
+            input_map [
+                {
+                    key: "input_ids"
+                    value: "input_ids"
+                },
+                { key: "max_length", value: "max_length" },
+                { key: "min_length", value: "min_length" },
+                { key: "num_beams", value: "num_beams" },
+                { key: "num_return_sequences", value: "num_return_sequences" },
+                { key: "length_penalty", value: "length_penalty" },
+                { key: "repetition_penalty", value: "repetition_penalty" }
+            ]
+            output_map {
+                key: "sequences"
+                value: "sequences"
+            }
+        },
+        {
+            model_name: "tokenizer_decoder"
+            model_version: -1
+            input_map [
+                {
+                    key: "sequences"
+                    value: "sequences"
+                }
+            ]
+            output_map {
+                key: "sequences_text"
+                value: "sequences_text"
+            }
+        }
+    ]
+}

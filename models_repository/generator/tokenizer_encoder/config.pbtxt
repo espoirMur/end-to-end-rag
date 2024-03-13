@@ -1,0 +1,50 @@
+name:"tokenizer_encoder"
+backend:"python"
+
+input [
+    {
+        name:"TEXT",
+        data_type:TYPE_STRING,
+        dims:[-1]
+    }
+]
+
+output:[
+    {
+        name:"input_ids",
+        data_type:TYPE_INT32,
+        dims:[-1,-1]
+    },
+    {
+        name: "max_length",
+        data_type: TYPE_INT32,
+        dims: [1]
+    },
+    {
+    name: "min_length",
+    data_type: TYPE_INT32,
+    dims: [1]
+    },
+    {
+        name: "num_beams",
+        data_type: TYPE_INT32,
+        dims: [1]
+    },
+    {
+        name: "num_return_sequences",
+        data_type: TYPE_INT32,
+        dims: [1]
+    },
+    {
+        name: "length_penalty",
+        data_type: TYPE_FP32,
+        dims: [1]
+    },
+    {
+        name: "repetition_penalty",
+        data_type: TYPE_FP32,
+        dims: [1]
+    }
+    ]
+
+    instance_group [{ kind: KIND_CPU }]
