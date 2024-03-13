@@ -25,6 +25,7 @@ tritonclient = {version = "==2.42.0", extras = ["grpc", "http"]}
 fastapi = "==0.109.2"
 optimum = {version = "==1.17.1", extras = ["onnxruntime"]}
 onnxruntime = "==1.15.1"
+pre-commit = "*"
 
 [dev-packages]
 

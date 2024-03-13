@@ -201,7 +201,7 @@ custom_onnx_configs={"model": custom_config},
 
 If we look at the main export function, it takes the model path, the task , the model kwargs and the custom config.
 
-All those parameters are self explantory, but for our case we need to adjust the model kwargs and set it to return the output attention to make it work for the case.
+All those parameters are self explanatory, but for our case we need to adjust the model kwargs and set it to return the output attention to make it work for the case.
 
 This code generate the model ONNX with inputs and output shapes. that model was saved at the specified path and we could use it. 
 
@@ -213,3 +213,72 @@ For that purpose we will use the the onnxruntime tools to export the model with 
 ### Adding the beamsearch node to the model.
 
 Tommorow.
+
+
+```python
+args_list = ['--model_name_or_path',
+ '/Users/esp.py/Projects/Personal/end-to-end-rag/models/bio-gpt-qa',
+ '--output',
+ '/Users/esp.py/Projects/Personal/end-to-end-rag/models_repository/generator/generator_model/1/biogpt-model-with-past-and-beam.onnx',
+ '--model_type',
+ 'gpt2',
+ '--num_beams',
+ '5',
+ '--temperature',
+ '0.25',
+ '--model_class',
+ 'BioGptModel']
+```
+This code will take the model and export
+I will generate the model with past and then export it to ONNX.
+
+```args = parse_arguments(arguments_list)
+
+from onnxruntime.transformers.convert_generation  import convert_generation_model, parse_arguments, GenerationType
+```
+And then this code will convert the model
+
+```python
+convert_generation_model(args=args, generation_type=GenerationType.BEAMSEARCH)
+```
+
+Remember to add dhat to export the model we had to adjust the code of the gpt_helper and add the following: 
+
+
+```python
+class MyBioGptModel(BioGptForCausalLM):
+    def forward(self, input_ids, position_ids, attention_mask, *past):
+        attention_mask = attention_mask + position_ids - position_ids # just to make sure we are using the position id in the garph.
+        results = super().forward(input_ids, 
+                               attention_mask=attention_mask, 
+                               past_key_values=past, 
+                               output_attentions=True)
+        return MyBioGptModel.post_process(results, self.config.num_hidden_layers)
+
+    @staticmethod
+    def post_process(result, num_layer):
+        if isinstance(result[1][0], (tuple, list)):
+            assert len(result[1]) == num_layer and len(result[1][0]) == 2
+            # assert len(result[1][0][0].shape) == 4 and result[1][0][0].shape == result[1][0][1].shape
+            present = []
+            for i in range(num_layer):
+                # Since transformers v4.*, past key and values are separated outputs.
+                # Here we concate them into one tensor to be compatible with Attention operator.
+                present.append(
+                    torch.cat(
+                        (result[1][i][0].unsqueeze(0), result[1][i][1].unsqueeze(0)),
+                        dim=0,
+                    )
+                )
+            return (result[0], tuple(present))
+
+        return result
+```
+
+And in the model class we added: 
+
+`  "BioGptModel": (MyBioGptModel, "logits", True)`
+
+# Note the decoder onnx path
+
+This code will export the model to onnx runtime with the beam search nodes, but it fails to pass the validation checks. NEed to come back and test

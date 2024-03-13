@@ -37,3 +37,14 @@ Renaming Task:
 - Setup KubeFlow 
 - Setup design the kubernetes components.
 - Document the whole process.
+- Use this process to clean the notebook: https://zhauniarovich.com/post/2020/2020-10-clearing-jupyter-output-p3/
+
+
+The second project will be news summarization 
+
+Good bored and tired of this RAG stuff, let me try news summarizaiton:
+
+https://towardsdatascience.com/summarize-reddit-comments-using-t5-bart-gpt-2-xlnet-models-a3e78a5ab944
+
+
+https://towardsdatascience.com/summarize-reddit-comments-using-t5-bart-gpt-2-xlnet-models-a3e78a5ab944
