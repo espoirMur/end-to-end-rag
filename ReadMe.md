@@ -38,6 +38,7 @@ Renaming Task:
 - Setup design the kubernetes components.
 - Document the whole process.
 - Use this process to clean the notebook: https://zhauniarovich.com/post/2020/2020-10-clearing-jupyter-output-p3/
+- Use the kuberentes.https://developer.nvidia.com/blog/deploying-nvidia-triton-at-scale-with-mig-and-kubernetes/
 
 
 The second project will be news summarization 
@@ -48,3 +49,10 @@ https://towardsdatascience.com/summarize-reddit-comments-using-t5-bart-gpt-2-xln
 
 
 https://towardsdatascience.com/summarize-reddit-comments-using-t5-bart-gpt-2-xlnet-models-a3e78a5ab944
+
+
+Other project ideas
+
+- Scrape the data from edup epst on exetat and analyse the data about diplome d'etat and find which category of school have the best results on the national state exam.
+
+- Build a project where small buisiness can share their portfolio, such as macon, carelleurs, etc.

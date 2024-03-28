@@ -3,3 +3,4 @@
 datasets/**
 **/models/**
 models_repository/**/*.onnx
+**/*.pyc
