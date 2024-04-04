@@ -40,6 +40,7 @@ Renaming Task:
 - Use this process to clean the notebook: https://zhauniarovich.com/post/2020/2020-10-clearing-jupyter-output-p3/
 - Use the kuberentes.https://developer.nvidia.com/blog/deploying-nvidia-triton-at-scale-with-mig-and-kubernetes/
 
+- https://blog.marvik.ai/2023/10/16/deploying-llama2-with-nvidia-triton-inference-server/
 
 The second project will be news summarization 
 

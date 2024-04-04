@@ -1,5 +1,5 @@
 {
-  "_name_or_path": "/Users/esp.py/Projects/Personal/end-to-end-rag/models/michiyasunaga_BioLinkBERT-large",
+  "_name_or_path": "michiyasunaga/BioLinkBERT-large",
   "architectures": [
     "BertModel"
   ],
@@ -18,7 +18,7 @@
   "num_hidden_layers": 24,
   "pad_token_id": 0,
   "position_embedding_type": "absolute",
-  "transformers_version": "4.27.1",
+  "transformers_version": "4.38.2",
   "type_vocab_size": 2,
   "use_cache": true,
   "vocab_size": 28895
