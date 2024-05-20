@@ -24,9 +24,9 @@ We will be using the following elements:
  
 
 On deployment with triton server...
-
+ffff
 This is not a research paper is it an engineer implementation, of an ML system to see if things will work in Production... 
-
+f
 
 
 Renaming Task:
