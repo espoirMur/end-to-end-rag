@@ -1,14 +1,9 @@
-import os
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Optional, Union, Mapping, OrderedDict
-
 import torch
-from transformers.onnx import export
+from dataclasses import dataclass
+from typing import Optional, Mapping, OrderedDict
 from transformers.onnx import OnnxConfig
 from transformers.utils import ModelOutput
-from sentence_transformers.models import Dense
-from transformers import AutoTokenizer, AutoModel, BertModel
+from transformers import BertModel
 
 
 class SBertOnnxConfig(OnnxConfig):
@@ -38,9 +33,6 @@ class CustomEmbeddingBertModel(BertModel):
         attention_mask: Optional[torch.Tensor] = None,
         head_mask: Optional[torch.Tensor] = None,
         inputs_embeds: Optional[torch.Tensor] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
     ):
         embeddings = super().forward(input_ids=input_ids,
                                      attention_mask=attention_mask,

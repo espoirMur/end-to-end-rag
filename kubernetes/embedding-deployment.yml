@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: biogpt
+   labels:
+     app: biogpt
+spec:
+   replicas: 1
+   selector:
+     matchLabels:
+       app: biogpt
+   template:
+     metadata:
+       labels:
+         app: biogpt
+     spec:
+       volumes:
+       - name: models
+         hostPath:
+           path: /models/retrieval # the path of the model repository  on the host cluster
+
+       containers:
+         - name: embedding-models
+           ports:
+           - containerPort: 8000
+             name: http-triton
+           - containerPort: 8001
+             name: grpc-triton
+           - containerPort: 8002
+             name: metrics-triton
+           image: "espymur/triton-onnx-cpu:dev"
+           volumeMounts:
+           - mountPath: /models
+             name: models
+           command: ["/bin/sh", "-c"]
+           args: ["tritonserver --model-repository=/models"] #  put the model in a cloud storage and pull it from here.
+           resources:
+             requests:
+                cpu: 1
+                memory: 2Gi
+               
