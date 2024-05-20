@@ -35,6 +35,11 @@ Need to find a bettew way to build the image. It shouldn't kept on failing
 
 #### Run the service with kuberenetes
 
+
+Make sure you have kubernetes and minikube installed to use kubernetes backend.
+
+- ` minikube start --mount --mount-string ~/fuull/pathh/to/models_repository/:/models `
+
 - Run the deployment with 
 
 `kubectl apply -f kubernetes/embedding-deployment.yml`
