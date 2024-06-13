@@ -113,3 +113,13 @@ I want to stop this and continue with the rag stuff.
 
 
 Ps: remember to create an empty folder named 1.
+
+
+End of the day managed to make stuff work.
+
+Next step write a blog on how to mount data volume .
+
+
+https://dev.to/otomato_io/mount-s3-objects-to-kubernetes-pods-12f5
+
+- https://blog.meain.io/2020/mounting-s3-bucket-kube/

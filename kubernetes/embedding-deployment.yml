@@ -17,7 +17,7 @@ spec:
        volumes:
        - name: oracle-cloud-fs
          hostPath:
-           path:  /mnt/s3data
+           path:  /tmp/s3
 
        containers:
          - name: embedding-models
@@ -29,6 +29,8 @@ spec:
            - containerPort: 8002
              name: metrics-triton
            image: "espymur/triton-onnx-cpu:dev"
+           securityContext:
+            privileged: true
            volumeMounts:
            - mountPath: /models
              name: oracle-cloud-fs

@@ -34,6 +34,6 @@ spec:
             path: /dev/fuse
         - name: oracle-cloud-fs
           hostPath:
-            path: /mnt/s3data
+            path: /tmp/s3
 
 
