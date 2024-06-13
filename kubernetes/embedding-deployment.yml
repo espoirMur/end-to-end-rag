@@ -15,9 +15,9 @@ spec:
          app: biogpt
      spec:
        volumes:
-       - name: models
+       - name: oracle-cloud-fs
          hostPath:
-           path: /models/retrieval # the path of the model repository  on the host cluster
+           path:  /mnt/s3data
 
        containers:
          - name: embedding-models
@@ -31,7 +31,7 @@ spec:
            image: "espymur/triton-onnx-cpu:dev"
            volumeMounts:
            - mountPath: /models
-             name: models
+             name: oracle-cloud-fs
            command: ["/bin/sh", "-c"]
            args: ["tritonserver --model-repository=/models"] #  put the model in a cloud storage and pull it from here.
            resources:

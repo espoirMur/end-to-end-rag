@@ -31,7 +31,7 @@ docker tag tritonserver:latest tritonserver:22.06-onnx-py-cpu
 
 
 
-Need to find a bettew way to build the image. It shouldn't kept on failing
+Need to find a better way to build the image. It shouldn't kept on failing
 
 #### Run the service with kuberenetes
 
@@ -70,3 +70,46 @@ The next step are:
 - Automate everything in a ML op fashion.
 - Write a post to document the process.
 I need to get back to this and stop with the laziness.
+
+
+
+#### As of 8 June 2024
+
+This what I call consitency, looll.
+
+
+Managed to create a kubernetes Cluster on Oracle cloud.
+
+Here are the sep to run it.
+
+
+`Make sure you have your kubernetes config saved to a path.`
+
+- Authenticate to your account using `oci session authenticate`
+- setup the config `export KUBECONFIG=$HOME/.kube/config_oci`
+- Make sure your authentication client is using client auth: `export OCI_CLI_AUTH=security_token`
+
+With that setup you can now connect to your cluster:
+
+With 
+
+`kubectl get nodes`
+
+
+### As of 13 June 2024
+
+Why am I spending so much time dealing with kubernetes? Am I a DevOp/Infra engineer?
+
+Basically in the past few days I spend sometime trying to share model data I have in my Oracle cloud bucket storage to my kubernetes pods. But that was unsuccessful.
+I have managed to mount Oracle cloud storage in a container using s3fs-fuse library, but unfortuantely, I wasn't able to share the data to the model container.
+
+I have tried other option but didn't work.
+
+My last attempt tommorow will be to download the data from the bucket and share it with the containers using PVC.
+
+> Note the :shared - it's a mount propagation modifier in the mountPath field that allows this volume to be shared by multiple pods/containers on the same node.
+
+I want to stop this and continue with the rag stuff.
+
+
+Ps: remember to create an empty folder named 1.
