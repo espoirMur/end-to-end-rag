@@ -21,6 +21,14 @@ We will be using the following elements:
  https://www.runpod.io/console/gpu-cloud
 
  - https://blog.griddynamics.com/retrieval-augmented-generation-llm/
+
+ - https://medium.com/@neum_ai/retrieval-augmented-generation-at-scale-building-a-distributed-system-for-synchronizing-and-eaa29162521
+
+ - https://github.com/infiniflow/ragflow/blob/main/rag/llm/embedding_model.py
+
+ - https://www.pinecone.io/learn/hybrid-search-intro/
+
+ -  https://haystack.deepset.ai/blog/haystack-nvidia-nim-rag-guide
  
 
 On deployment with triton server...

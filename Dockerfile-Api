@@ -1,4 +1,4 @@
-FROM python:3.10 as base
+FROM python:3.12 as base
 LABEL maintainer="Espoir Murhabazi<espoir.mur [] gmail>"
 
 
@@ -31,7 +31,7 @@ COPY --from=python-deps $PYROOT/bin $PYROOT/bin
 RUN useradd --create-home es.py
 RUN mkdir /home/api
 ENV WORKING_DIR=/home/fastapi/
-ENV  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 ENV PATH="$PYROOT/bin:$PATH"
 ENV PYTHONPATH="${PYTHONPATH}:${WORKING_DIR}"
 COPY src/api ${WORKING_DIR}/api

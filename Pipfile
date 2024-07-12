@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-
 torch = "==2.2.0"
 transformers = "==4.38.2"
 datasets = "==2.16.1"
@@ -12,7 +11,6 @@ accelerate = "==0.17.1"
 evaluate = "==0.4.0"
 tensorboard = "==2.15.1"
 scikit-learn = "==1.4.0"
-sentence-transformers = "==2.2.2"
 python-dotenv = "==1.0.1"
 psycopg2-binary = "==2.9.9"
 pgvector = "==0.2.4"
@@ -25,9 +23,15 @@ tritonclient = {version = "==2.42.0", extras = ["grpc", "http"]}
 fastapi = "==0.109.2"
 optimum = {version = "==1.17.1", extras = ["onnxruntime"]}
 onnxruntime = "==1.15.1"
-
+semantic-router = {extras = ["processing"], version = "==0.0.24"}
+haystack-ai = "==2.2.4"
+pgvector-haystack = "==0.4.0"
+langchain-text-splitters = "*"
+spacy = "==3.7.5"
+sentence-transformers = ">=2.3.1"
 
 [dev-packages]
+jupyterlab = "*"
 
 [api]
 jupyterlab = "*"

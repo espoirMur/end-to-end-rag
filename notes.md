@@ -123,3 +123,17 @@ Next step write a blog on how to mount data volume .
 https://dev.to/otomato_io/mount-s3-objects-to-kubernetes-pods-12f5
 
 - https://blog.meain.io/2020/mounting-s3-bucket-kube/
+
+Write a blog post on the mount volume
+Write a post on deployment with kubernetes
+Set ci/cd for the deployment
+Prometheus and graphana for loggin.
+
+
+### Notes On Retrieval
+
+Back to the RAG, I want to work on the retrieval model.
+
+Read on this document to learn more about chunking: https://github.com/pinecone-io/examples/blob/master/learn/generation/better-rag/02a-alt-chunking-methods.ipynb
+
+Implement chuncking with document at scale. Try picetone database.
