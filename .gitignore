@@ -1,6 +1,5 @@
 .env
 **ipynb_checkpoints**
-datasets/**
 **/models/**
 models_repository/**/*.onnx
 **/*.pyc
