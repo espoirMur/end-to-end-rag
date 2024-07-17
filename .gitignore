@@ -5,3 +5,4 @@ datasets/**
 models_repository/**/*.onnx
 **/*.pyc
 kubernetes/secret.yaml
+offload/
