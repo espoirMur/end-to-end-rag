@@ -164,3 +164,13 @@ I need to explore it.
 
 
 I have managed to run the croissant model locally on my laptop which is really fun, it has good strong french capabilities. I will use it to annodate my question, but in the future I will keep on using it to for more cool stuff on my dataset.
+
+
+I discover https://www.reddit.com/r/LocalLLaMA/comments/15ak5k4/short_guide_to_hosting_your_own_llamacpp_openai/
+
+Friday 19 July,
+
+
+Note 19 on the tokeniser, I seem to find out what the issue was. 
+
+I basically need to edit the code \u0000 from the tokenire

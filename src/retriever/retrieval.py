@@ -4,6 +4,7 @@ from src.retriever.database import execute_query, generate_database_connection
 from spacy.language import Language
 from textacy import extract
 import spacy
+from unicodedata import normalize as unicode_normalize
 
 
 class HybridRetriever:
@@ -65,4 +66,6 @@ class HybridRetriever:
         keyword_results = self.keyword_search(keywords)
         results = semantic_results + keyword_results
         re_ranked_results = self.rerank(query, results)
+        re_ranked_results = [unicode_normalize(
+            'NFC', result) for result in re_ranked_results]
         return re_ranked_results
