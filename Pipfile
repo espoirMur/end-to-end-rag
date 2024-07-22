@@ -5,9 +5,8 @@ name = "pypi"
 
 [packages]
 torch = "==2.2.0"
-transformers = "==4.38.2"
 datasets = "==2.16.1"
-accelerate = "==0.17.1"
+accelerate = "*"
 evaluate = "==0.4.0"
 tensorboard = "==2.15.1"
 scikit-learn = "==1.4.0"
@@ -23,12 +22,16 @@ tritonclient = {version = "==2.42.0", extras = ["grpc", "http"]}
 fastapi = "==0.109.2"
 optimum = {version = "==1.17.1", extras = ["onnxruntime"]}
 onnxruntime = "==1.15.1"
-semantic-router = {extras = ["processing"], version = "==0.0.24"}
 haystack-ai = "==2.2.4"
 pgvector-haystack = "==0.4.0"
 langchain-text-splitters = "*"
 spacy = "==3.7.5"
 sentence-transformers = ">=2.3.1"
+textacy = "==0.13.0"
+argilla = "==2.0.0rc2"
+pip = "*"
+install = "*"
+oci = "*"
 
 [dev-packages]
 jupyterlab = "*"

@@ -1,7 +1,8 @@
 .env
 **ipynb_checkpoints**
-datasets/**
 **/models/**
 models_repository/**/*.onnx
 **/*.pyc
 kubernetes/secret.yaml
+offload/
+datasets/

@@ -137,3 +137,40 @@ Back to the RAG, I want to work on the retrieval model.
 Read on this document to learn more about chunking: https://github.com/pinecone-io/examples/blob/master/learn/generation/better-rag/02a-alt-chunking-methods.ipynb
 
 Implement chuncking with document at scale. Try picetone database.
+
+
+### As of 12 July 2024
+
+I managed to ingested 86k Documents in postgres database and calculate the embedding of those documents using bert case.
+
+How we need to implement the search feature that will be using hybrid search (embedding) + keywords.
+
+I need to have a look at this chat application that implemented everything https://github.com/Azure-Samples/rag-postgres-openai-python/tree/main/src/fastapi_app
+I need to read more on [hybrid search ](https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/azure-ai-search-outperforming-vector-search-with-hybrid/ba-p/3929167) and follow the project to read more on the implementation.
+
+
+# Tuesday 16th of July 2024
+
+We managed to get hte question answering generation working wit h a T5 models, the next step will be to anodate at least 1k questions with the ocontext, then fine tune the model on them and generate an improved model.
+
+
+Wednsday 17th July
+
+I discovered the croissan LLM model. 
+
+https://huggingface.co/blog/manu/croissant-llm-blog
+
+I need to explore it.
+
+
+I have managed to run the croissant model locally on my laptop which is really fun, it has good strong french capabilities. I will use it to annodate my question, but in the future I will keep on using it to for more cool stuff on my dataset.
+
+
+I discover https://www.reddit.com/r/LocalLLaMA/comments/15ak5k4/short_guide_to_hosting_your_own_llamacpp_openai/
+
+Friday 19 July,
+
+
+Note 19 on the tokeniser, I seem to find out what the issue was. 
+
+I basically need to edit the code \u0000 from the tokenire

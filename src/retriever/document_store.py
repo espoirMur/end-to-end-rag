@@ -8,6 +8,7 @@ from haystack.utils.auth import Secret
 from psycopg.sql import SQL, Identifier
 from psycopg import Error, IntegrityError
 from psycopg.sql import Literal as SQLLiteral
+from haystack.document_stores.types import DuplicatePolicy
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class MyPgVectorDocumentStore(PgvectorDocumentStore):
         self.sql_insert_string = sql_insert_string
         self.update_string = sql_update_string
 
-    def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
+    def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.OVERWRITE) -> int:
         """
         Writes documents to the document store.
 
