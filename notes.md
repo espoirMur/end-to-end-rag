@@ -174,3 +174,8 @@ Friday 19 July,
 Note 19 on the tokeniser, I seem to find out what the issue was. 
 
 I basically need to edit the code \u0000 from the tokenire
+
+
+### Update on 23 July!
+
+The RAG experiment is considered as completed, the next step is to organize the code into module and start the productionarization.
