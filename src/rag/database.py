@@ -5,6 +5,7 @@ from urllib.parse import quote
 from typing import List, Any, Optional, Tuple
 from unicodedata import normalize as unicode_normalize
 
+from sqlalchemy.engine import Connection
 
 
 load_dotenv()
@@ -18,7 +19,7 @@ database_name = getenv('POSTGRES_DB')
 postgres_uri = f'postgresql://{database_user}:{quote(database_password)}@{database_host}:{database_port}/{database_name}'
 
 
-def generate_database_connection():
+def generate_database_connection() -> Connection:
     database_connection = connect(
         user=database_user,
         password=database_password,
@@ -36,5 +37,3 @@ def execute_query(database_connection, query, params=None) -> Optional[List[Any]
             return cursor.fetchall()
         except:
             return None
-        
-
