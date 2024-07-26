@@ -12,7 +12,12 @@ services:
         build: 
             context: ./storage/
             dockerfile: DockerFile
-        privileged: true
+        security_opt:
+          - apparmor:unconfined
+        cap_add:
+          - SYS_ADMIN
+        devices:
+          - /dev/fuse
         env_file:
           .env
 volumes:
