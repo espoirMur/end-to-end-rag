@@ -6,3 +6,5 @@ models_repository/**/*.onnx
 kubernetes/secret.yaml
 offload/
 datasets/
+
+***.env
