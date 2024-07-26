@@ -1,8 +1,8 @@
 
 
 echo "$ACCESS_KEY_ID:$ORACLE_CLOUD_SECRET" > passwd && chmod 600 passwd
-URL=https://$TENANT_ID.compat.objectstorage.$REGION.oraclecloud.com 
-s3fs -f -d $OCI_BUCKET $MOUNT_POINT -o endpoint=$REGION -o passwd_file=passwd -o url=$URL -o nomultipart -o use_path_request_style 
+URL=https://lrtfqsmony6u.compat.objectstorage.uk-london-1.oraclecloud.com 
+s3fs -f -d $OCI_BUCKET $MOUNT_POINT -o passwd_file=passwd -o url=$URL -o nomultipart -o use_path_request_style
 
 # to run the container with this scrip, use the following command
 

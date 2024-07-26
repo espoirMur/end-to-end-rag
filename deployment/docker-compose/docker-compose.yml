@@ -1,4 +1,3 @@
-version: '3.7'
 services: 
     llama-server:
         image: ghcr.io/espoirmur/llama.cpp:server--b1-8c5997d
@@ -6,19 +5,9 @@ services:
         ports: 
             - "8001:8001"
         volumes:
-          - /var/s3:/models
-        command: -m /models/croissantllm32.gguf --port 8001 -n 256
-    storage-mount:
-        build: 
-            context: ./storage/
-            dockerfile: DockerFile
-        security_opt:
-          - apparmor:unconfined
-        cap_add:
-          - SYS_ADMIN
-        devices:
-          - /dev/fuse
-        env_file:
-          .env
+          - model_repository:/models
+        command: -m /models/croissantllm_32.16bits.gguf --port 8000 -n 256 --host 0.0.0.0
 volumes:
   model_repository:
+    driver: s3fs
+    name: "croissant-llm-model"
