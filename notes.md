@@ -179,3 +179,8 @@ I basically need to edit the code \u0000 from the tokenire
 ### Update on 23 July!
 
 The RAG experiment is considered as completed, the next step is to organize the code into module and start the productionarization.
+
+
+### Update on 29 July:
+
+Made the presentation about the model, the next step is to write about it.
