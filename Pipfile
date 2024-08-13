@@ -29,9 +29,7 @@ spacy = "==3.7.5"
 sentence-transformers = ">=2.3.1"
 textacy = "==0.13.0"
 argilla = "==2.0.0rc2"
-pip = "*"
-install = "*"
-oci = "*"
+b2sdk= "==2.5.0"
 
 [dev-packages]
 jupyterlab = "*"

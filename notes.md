@@ -173,7 +173,7 @@ Friday 19 July,
 
 Note 19 on the tokeniser, I seem to find out what the issue was. 
 
-I basically need to edit the code \u0000 from the tokenire
+I basically need to edit the code \u0000 from the tokenizer.
 
 
 ### Update on 23 July!
@@ -184,3 +184,8 @@ The RAG experiment is considered as completed, the next step is to organize the 
 ### Update on 29 July:
 
 Made the presentation about the model, the next step is to write about it.
+
+
+### Update on 31 July
+
+Now I need to build the pipeline that will serve the workflow. I will be using Kuberenetes with Argo workflows
