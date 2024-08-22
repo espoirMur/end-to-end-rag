@@ -1,13 +1,13 @@
-from rag.database import generate_database_connection, execute_query, postgres_uri
+from datetime import datetime
+from shared.database import generate_database_connection, execute_query, postgres_uri
 from datasets import Dataset, Value, Features
 from haystack import Document
 from haystack.components.preprocessors import DocumentCleaner
-from src.rag.components.document_splitter import RecursiveCharacterTextSplitterComponent
-from src.retriever.document_store import MyPgVectorDocumentStore
+from shared.document_store import MyPgVectorDocumentStore
+from ingestion.document_splitter import RecursiveCharacterTextSplitterComponent
 from haystack.utils.auth import Secret
 from haystack.components.writers import DocumentWriter
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
-from haystack.components.writers import DocumentWriter
 from haystack import Pipeline
 
 
@@ -74,7 +74,6 @@ class DocumentProcessor:
         congo_news_dataset = Dataset.from_sql(
             table_name, con=self.database_connection, features=features)
         return congo_news_dataset
-
 
     def init_document_store(self):
         """
@@ -146,9 +145,11 @@ class DocumentProcessor:
         Args:
             documents (Dataset): _description_
         """
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        # ned to read document for today only in the database.
         dataset = self.read_documents()
         haystack_documents = [
             Document(content=example['content'], id=example["id"], meta={}) for example in dataset
         ]
         indexing_pipeline = self.init_haystack_pipeline()
-        indexing_pipeline.run(haystack_documents)
+        return indexing_pipeline.run(haystack_documents)

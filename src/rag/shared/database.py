@@ -1,6 +1,6 @@
 from psycopg2 import connect
 from os import getenv
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 from urllib.parse import quote
 from typing import List, Any, Optional, Tuple
 from unicodedata import normalize as unicode_normalize

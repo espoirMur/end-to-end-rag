@@ -189,3 +189,8 @@ Made the presentation about the model, the next step is to write about it.
 ### Update on 31 July
 
 Now I need to build the pipeline that will serve the workflow. I will be using Kuberenetes with Argo workflows
+
+
+### Update on 13 August 2024
+
+Update on the kubeflow pipeline

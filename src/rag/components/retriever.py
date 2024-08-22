@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from typing import List, Any, Tuple
-from src.rag.database import execute_query, generate_database_connection
+from rag.shared.database import execute_query, generate_database_connection
 from spacy.language import Language
 from textacy import extract
 import spacy

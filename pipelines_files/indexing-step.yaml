@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: indexing-step-
+  namespace: argo
+spec:
+  entrypoint: ingestion
+  templates:
+  - container:
+      command:
+      - python
+      - ingestion/main.py
+      image: espymur/rag-doc-ingestion:latest
+    name: ingestion-79c602
+  - name: ingestion
+    steps:
+    - - name: ingestion
+        template: ingestion-79c602
