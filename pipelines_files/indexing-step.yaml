@@ -10,9 +10,35 @@ spec:
       command:
       - python
       - ingestion/main.py
+      env:
+      - name: POSTGRES_HOST
+        valueFrom:
+          secretKeyRef:
+            key: POSTGRES_HOST
+            name: postgres-database-secrets
+      - name: POSTGRES_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            key: POSTGRES_PASSWORD
+            name: postgres-database-secrets
+      - name: POSTGRES_USER
+        valueFrom:
+          secretKeyRef:
+            key: POSTGRES_USER
+            name: postgres-database-secrets
+      - name: POSTGRES_PORT
+        valueFrom:
+          secretKeyRef:
+            key: POSTGRES_PORT
+            name: postgres-database-secrets
+      - name: POSTGRES_DB
+        valueFrom:
+          secretKeyRef:
+            key: POSTGRES_DB
+            name: postgres-database-secrets
       image: espymur/rag-doc-ingestion:latest
-    name: ingestion-79c602
+    name: ingestion-65ae49
   - name: ingestion
     steps:
     - - name: ingestion
-        template: ingestion-79c602
+        template: ingestion-65ae49

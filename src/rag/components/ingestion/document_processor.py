@@ -1,6 +1,5 @@
 from datetime import datetime
 from shared.database import generate_database_connection, execute_query, postgres_uri
-from datasets import Dataset, Value, Features
 from haystack import Document
 from haystack.components.preprocessors import DocumentCleaner
 from shared.document_store import MyPgVectorDocumentStore
@@ -9,6 +8,7 @@ from haystack.utils.auth import Secret
 from haystack.components.writers import DocumentWriter
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
 from haystack import Pipeline
+from sqlalchemy.engine import CursorResult
 
 
 import os
@@ -56,24 +56,17 @@ class DocumentProcessor:
     def create_tables(self):
         execute_query(self.database_connection, TABLE_CREATION_STRING)
 
-    def read_documents(self, table_name: str = 'article') -> Dataset:
+    def read_documents(self, table_name: str = 'article') -> CursorResult:
         """
-        Read the table containing the document in the database into a Huggingface Dataset object.
+        Read the documents from the database. and Return a cursor of results
         """
-        features = Features({
-            'id': Value('int32'),
-            'title': Value('string'),
-            'content': Value('string'),
-            'summary': Value('string'),
-            'posted_at': Value('string'),
-            'website_origin': Value('string'),
-            'url': Value('string'),
-            'author': Value('string'),
-            'saved_at': Value('string'),
-        })
-        congo_news_dataset = Dataset.from_sql(
-            table_name, con=self.database_connection, features=features)
-        return congo_news_dataset
+        query = f"""
+            SELECT id, title, content, posted_at, website_origin, url, author 
+            FROM {table_name}
+        """
+        with self.database_connection() as connection:
+            results = connection.execute(query)
+            return results
 
     def init_document_store(self):
         """
@@ -149,7 +142,10 @@ class DocumentProcessor:
         # ned to read document for today only in the database.
         dataset = self.read_documents()
         haystack_documents = [
-            Document(content=example['content'], id=example["id"], meta={}) for example in dataset
+            Document(content=example.content, id=example.id, meta={
+                "posted_at": example.posted_at,
+                "url": example.url,
+            }) for example in dataset
         ]
         indexing_pipeline = self.init_haystack_pipeline()
         return indexing_pipeline.run(haystack_documents)

@@ -194,3 +194,35 @@ Now I need to build the pipeline that will serve the workflow. I will be using K
 ### Update on 13 August 2024
 
 Update on the kubeflow pipeline
+
+
+### Update on the 28 of August 2024
+
+On this date, after hidding for almost 10 days I have to come back to my lovely project. 
+
+I really missed it, i need to review it and contniue working about it.
+
+I have managed to have the data pipeline running and it is populating the database with the daily news data.
+
+I am now working on the ingestion pipeline. 
+
+I nede to work on how to manage secrets for my Kubeflow pipeline with argo worklows.
+
+I also learned how to build workflows with Hera.
+
+https://external-secrets.io/latest/introduction/getting-started/
+
+
+## Update on 
+
+ 10 September, 
+
+ Managed to make the secret work, needto sort out libraries.
+
+ ```
+   File "/pyroot/lib/python3.12/site-packages/requests/certs.py", line 14, in <module>
+    from certifi import where
+ModuleNotFoundError: No module named 'certifi'
+time="2024-09-10T21:45:50.704Z" level=info msg="sub-process exited" argo=true error="<nil>"
+Error: exit status 1
+ ```
