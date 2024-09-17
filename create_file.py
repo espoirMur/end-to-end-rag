@@ -15,7 +15,7 @@ def encode_env_file(input_file, output_file):
 
 
 # Usage
-input_file = '.env'
+input_file = '.env_prod'
 output_file = '.env.base64'
 encode_env_file(input_file, output_file)
 print(f"Encoded secrets have been written to {output_file}")

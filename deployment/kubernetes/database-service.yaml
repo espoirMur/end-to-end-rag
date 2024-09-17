@@ -1,0 +1,9 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: postgres-database-service
+  namespace: argo
+spec:
+  clusterIP: None
+  ports:
+  - port: 5434

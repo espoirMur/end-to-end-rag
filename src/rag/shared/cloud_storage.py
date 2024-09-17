@@ -7,7 +7,7 @@ class BackBlazeCloudStorage:
     """
     This class is responsible for interacting with backblaze cloud storage.
 
-    It will instanciate the cloud storage client and provide methods for uploading and downloading files
+    It will instantiate the cloud storage client and provide methods for uploading and downloading files
     """
 
     def load_environment_variables(self):

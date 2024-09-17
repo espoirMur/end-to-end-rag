@@ -45,7 +45,6 @@ class DocumentProcessor:
     """
 
     def __init__(self, embedding_model_id: str = "camembert-base") -> None:
-        self.database_connection = generate_database_connection()
         self.text_splitter = self.init_text_splitter()
         self.document_cleaner = self.init_document_cleaner()
         self.document_store = self.init_document_store()
@@ -53,20 +52,17 @@ class DocumentProcessor:
         self.document_embedder = self.init_document_embedder()
         self.document_writer = self.init_document_writer()
 
-    def create_tables(self):
-        execute_query(self.database_connection, TABLE_CREATION_STRING)
-
     def read_documents(self, table_name: str = 'article') -> CursorResult:
         """
         Read the documents from the database. and Return a cursor of results
         """
         query = f"""
-            SELECT id, title, content, posted_at, website_origin, url, author 
-            FROM {table_name}
+            SELECT id, title, content, posted_at, website_origin, url, author
+            FROM {table_name} limit 5
         """
-        with self.database_connection() as connection:
-            results = connection.execute(query)
-            return results
+        connection = generate_database_connection()
+
+        return execute_query(connection, query)
 
     def init_document_store(self):
         """
@@ -88,7 +84,7 @@ class DocumentProcessor:
         """ Initialize the document embedder for the RAG system.
         """
         embedder_component = SentenceTransformersDocumentEmbedder(
-            model=self,
+            model=self.embedding_model_id,
             normalize_embeddings=True,
 
         )
@@ -148,4 +144,4 @@ class DocumentProcessor:
             }) for example in dataset
         ]
         indexing_pipeline = self.init_haystack_pipeline()
-        return indexing_pipeline.run(haystack_documents)
+        return indexing_pipeline.run(data={"documents": haystack_documents})

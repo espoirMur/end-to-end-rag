@@ -217,7 +217,8 @@ https://external-secrets.io/latest/introduction/getting-started/
 
  10 September, 
 
- Managed to make the secret work, needto sort out libraries.
+ Managed to make the secret work, needto sort out libra
+ ries.
 
  ```
    File "/pyroot/lib/python3.12/site-packages/requests/certs.py", line 14, in <module>
@@ -226,3 +227,45 @@ ModuleNotFoundError: No module named 'certifi'
 time="2024-09-10T21:45:50.704Z" level=info msg="sub-process exited" argo=true error="<nil>"
 Error: exit status 1
  ```
+### Update on 11 September
+
+
+Need to work on Kubenetes networking and access database from the cluster.
+
+https://speakerdeck.com/thockin/kubernetes-and-networks-why-is-this-so-dang-hard?slide=40
+
+Refer to this: https://stackoverflow.com/questions/63344920/access-external-database-from-kubernetes
+
+
+Still nede to figure out this shit..
+
+
+
+### Update 13 September
+
+Learned how to create secrets.
+
+Encrypt the environment variables as base64!
+
+Then creates Kubernetes secrets from them.
+
+Use the `kubeseal` to create the secrets.`
+
+kubeseal --format=yaml --cert=public-key-cert.pem < deployment/kubernetes/database-secret.yaml > deployment/kubernetes/database-sealed-secret.yaml
+
+Then create a service and an endpoint tht will help the pod to connect the pod to the external database service.
+
+
+### Update 16 September... 
+
+Need to update the image.. 
+
+I need to download the image in a volume for the indexing piepline and avoid to install all the sentence transformer pipeline in the docker image.
+
+
+Or use an external storage as volume for the huggingface model, instead of always downloading it in the container.
+
+
+### Update on 17 September
+
+Run the Document ingestion and scale it to multiple instances.ha
