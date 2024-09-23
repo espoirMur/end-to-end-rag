@@ -1,6 +1,7 @@
-{"terminal.integrated.env.osx": {
-    "PYTHONPATH": "${workspaceFolder}"},
-
-"python.defaultInterpreterPath": "./.venv/bin/python",
-"liveServer.settings.port": 5001
+{
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}",
+    "PATH": ""
+  },
+  "python.defaultInterpreterPath": "${workspaceRoot}/.venv/bin/python"
 }

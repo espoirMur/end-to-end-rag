@@ -1,0 +1,49 @@
+# PIPELINE DEFINITION
+# Name: ingestion-pipeline-component
+# Outputs:
+#    Output: dict
+components:
+  comp-ingestion-pipeline-component:
+    executorLabel: exec-ingestion-pipeline-component
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRUCT
+deploymentSpec:
+  executors:
+    exec-ingestion-pipeline-component:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - ingestion_pipeline_component
+        command:
+        - python3
+        - -m
+        - kfp.dsl.executor_main
+        image: ghcr.io/espoirmur/rag-ingestion:latest
+pipelineInfo:
+  name: ingestion-pipeline-component
+root:
+  dag:
+    outputs:
+      parameters:
+        Output:
+          valueFromParameter:
+            outputParameterKey: Output
+            producerSubtask: ingestion-pipeline-component
+    tasks:
+      ingestion-pipeline-component:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-ingestion-pipeline-component
+        taskInfo:
+          name: ingestion-pipeline-component
+  outputDefinitions:
+    parameters:
+      Output:
+        parameterType: STRUCT
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.7.0

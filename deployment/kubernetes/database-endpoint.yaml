@@ -1,0 +1,17 @@
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: postgres-database-endpoint
+  labels:
+    kubernetes.io/service-name: postgres-database-service
+  namespace: argo
+addressType: IPv4
+ports:
+  - name: http
+    protocol: TCP
+    port: 5434
+endpoints:
+  - addresses:
+      - "107.173.6.77"
+    conditions:
+      ready: true

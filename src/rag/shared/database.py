@@ -1,12 +1,13 @@
 from psycopg2 import connect
 from os import getenv
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 from urllib.parse import quote
 from typing import List, Any, Optional, Tuple
 from unicodedata import normalize as unicode_normalize
-
+from collections.abc import Generator
 from sqlalchemy.engine import Connection
 
+from psycopg2.extras import NamedTupleCursor
 
 load_dotenv()
 database_user = getenv('POSTGRES_USER')
@@ -30,10 +31,22 @@ def generate_database_connection() -> Connection:
     return database_connection
 
 
-def execute_query(database_connection, query, params=None) -> Optional[List[Any]]:
-    with database_connection.cursor() as cursor:
-        cursor.execute(query, params)
+def execute_query(database_connection, query, params=None) -> Generator[List[NamedTupleCursor]]:
+    """
+    Execute a database query using the provided database connection.
+
+    Args:
+        database_connection: A connection to the database.
+        query: The SQL query to execute.
+        params: Optional parameters to pass to the query.
+
+    Returns:
+        A list of query results, or None if an error occurs.
+    """
+    with database_connection.cursor(cursor_factory=NamedTupleCursor) as cursor:
         try:
+            cursor.execute(query, params)
             return cursor.fetchall()
-        except:
-            return None
+        except Exception as e:
+            raise ValueError(
+                f"an execution error occurred for query {query!r} with params {params!r}") from e

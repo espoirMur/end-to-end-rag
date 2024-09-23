@@ -1,14 +1,14 @@
-from rag.database import generate_database_connection, execute_query, postgres_uri
-from datasets import Dataset, Value, Features
+from datetime import datetime
+from shared.database import generate_database_connection, execute_query, postgres_uri
 from haystack import Document
 from haystack.components.preprocessors import DocumentCleaner
-from src.rag.components.document_splitter import RecursiveCharacterTextSplitterComponent
-from src.retriever.document_store import MyPgVectorDocumentStore
+from shared.document_store import MyPgVectorDocumentStore
+from ingestion.document_splitter import RecursiveCharacterTextSplitterComponent
 from haystack.utils.auth import Secret
 from haystack.components.writers import DocumentWriter
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder
-from haystack.components.writers import DocumentWriter
 from haystack import Pipeline
+from sqlalchemy.engine import CursorResult
 
 
 import os
@@ -45,7 +45,6 @@ class DocumentProcessor:
     """
 
     def __init__(self, embedding_model_id: str = "camembert-base") -> None:
-        self.database_connection = generate_database_connection()
         self.text_splitter = self.init_text_splitter()
         self.document_cleaner = self.init_document_cleaner()
         self.document_store = self.init_document_store()
@@ -53,28 +52,19 @@ class DocumentProcessor:
         self.document_embedder = self.init_document_embedder()
         self.document_writer = self.init_document_writer()
 
-    def create_tables(self):
-        execute_query(self.database_connection, TABLE_CREATION_STRING)
-
-    def read_documents(self, table_name: str = 'article') -> Dataset:
+    def read_documents(self, table_name: str = 'article', use_current_date: bool = True) -> CursorResult:
         """
-        Read the table containing the document in the database into a Huggingface Dataset object.
+        Read the documents from the database. and Return a cursor of results
         """
-        features = Features({
-            'id': Value('int32'),
-            'title': Value('string'),
-            'content': Value('string'),
-            'summary': Value('string'),
-            'posted_at': Value('string'),
-            'website_origin': Value('string'),
-            'url': Value('string'),
-            'author': Value('string'),
-            'saved_at': Value('string'),
-        })
-        congo_news_dataset = Dataset.from_sql(
-            table_name, con=self.database_connection, features=features)
-        return congo_news_dataset
+        query = f"""
+            SELECT id, title, content, posted_at, website_origin, url, author
+            FROM {table_name}
+        """
+        if use_current_date:
+            query = query + " WHERE posted_at::date = CURRENT_DATE"
+        connection = generate_database_connection()
 
+        return execute_query(connection, query)
 
     def init_document_store(self):
         """
@@ -96,7 +86,7 @@ class DocumentProcessor:
         """ Initialize the document embedder for the RAG system.
         """
         embedder_component = SentenceTransformersDocumentEmbedder(
-            model=self,
+            model=self.embedding_model_id,
             normalize_embeddings=True,
 
         )
@@ -140,15 +130,25 @@ class DocumentProcessor:
 
         return index_pipeline
 
-    def run(self):
-        """Run the document processor Pipeline
+    def run(self, use_current_date: bool = True) -> None:
+        """
+        Run the document processor pipeline.
+
+        This method reads the documents from the database,
+        clean the text, split the text into chunks,
+        compute the embedding for each chunk and
+        save the chunk as document in the document store.
 
         Args:
-            documents (Dataset): _description_
+            use_current_date (bool, optional): Whether to use the current date. Defaults to True.
         """
-        dataset = self.read_documents()
+        dataset = self.read_documents(
+            table_name="article", use_current_date=use_current_date)
         haystack_documents = [
-            Document(content=example['content'], id=example["id"], meta={}) for example in dataset
+            Document(content=example.content, id=example.id, meta={
+                "posted_at": example.posted_at,
+                "url": example.url,
+            }) for example in dataset
         ]
         indexing_pipeline = self.init_haystack_pipeline()
-        indexing_pipeline.run(haystack_documents)
+        return indexing_pipeline.run(data={"documents": haystack_documents})

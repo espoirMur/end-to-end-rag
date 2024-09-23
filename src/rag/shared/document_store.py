@@ -9,7 +9,8 @@ from psycopg.sql import SQL, Identifier
 from psycopg import Error, IntegrityError
 from psycopg.sql import Literal as SQLLiteral
 from haystack.document_stores.types import DuplicatePolicy
-
+from psycopg import Error, IntegrityError, connect
+from psycopg.rows import dict_row
 
 logger = logging.getLogger(__name__)
 
@@ -127,3 +128,43 @@ class MyPgVectorDocumentStore(PgvectorDocumentStore):
         if not index_exists:
             self._execute_sql(
                 sql_create_index, error_msg="Could not create keyword index on table")
+
+    def _create_connection(self):
+        conn_str = self.connection_string.resolve_value() or ""
+        connection = connect(conn_str)
+        connection.autocommit = True
+
+        self._connection = connection
+        self._cursor = self._connection.cursor()
+        self._dict_cursor = self._connection.cursor(row_factory=dict_row)
+
+        # Init schema
+        if self.recreate_table:
+            self.delete_table()
+        self._create_table_if_not_exists()
+        self._create_keyword_index_if_not_exists()
+
+        if self.search_strategy == "hnsw":
+            self._handle_hnsw()
+
+        return self._connection
+
+    def _create_table_if_not_exists(self):
+        """
+        Creates the table to store Haystack documents if it doesn't exist yet.
+        """
+
+        TABLE_CREATION_STRING = """
+        CREATE TABLE IF NOT EXISTS article_embeddings (
+            id SERIAL PRIMARY KEY,
+            article_id INTEGER,
+            chunk TEXT,
+            chunk_vector VECTOR(768),
+            CONSTRAINT fk_article_id FOREIGN KEY (article_id) REFERENCES article(id)
+        );
+        """
+
+        create_sql = SQL(TABLE_CREATION_STRING)
+
+        self._execute_sql(
+            create_sql, error_msg="Could not create table in PgvectorDocumentStore")

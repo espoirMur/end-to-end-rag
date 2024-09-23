@@ -1,0 +1,52 @@
+FROM python:3.12 as base
+LABEL maintainer="Espoir Murhabazi<espoir.mur [] gmail>"
+
+
+# Never prompt the user for choices on installation/configuration of packages
+ENV DEBIAN_FRONTEND noninteractive
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 
+
+
+
+FROM base AS python-deps
+ENV PYROOT /pyroot
+ENV PYTHONUSERBASE $PYROOT
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        curl \
+        build-essential\
+        software-properties-common \
+        libpq5
+COPY Pipfile Pipfile.lock ./
+RUN python -m pip install --upgrade pip
+RUN pip install pipenv 
+RUN PIP_USER=1 pipenv install --categories=document-ingestion --system --deploy
+RUN pip install torch==2.2.0 --index-url https://download.pytorch.org/whl/cpu
+RUN pip install sentence-transformers==2.3.1
+
+FROM python:3.12-slim AS runtime
+
+ENV PYROOT /pyroot
+ENV PYTHONUSERBASE $PYROOT
+
+COPY --from=python-deps $PYROOT/lib $PYROOT/lib
+COPY --from=python-deps $PYROOT/bin $PYROOT/bin
+# this package is needed for request and was not installed in the normal locaion.
+COPY --from=python-deps /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
+RUN useradd --create-home es.py
+RUN mkdir /home/ingestion_pipeline
+ENV WORKING_DIR=/home/ingestion_pipeline/
+ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+ENV PATH="$PYROOT/bin:$PATH"
+ENV PYTHONPATH="${PYTHONPATH}:${WORKING_DIR}"
+COPY src/rag/components/ingestion ${WORKING_DIR}/ingestion
+COPY src/rag/shared ${WORKING_DIR}/shared
+WORKDIR ${WORKING_DIR}
+RUN chown -R es.py:es.py ${WORKING_DIR}
+RUN chmod -R 755 ${WORKING_DIR}
+USER es.py

@@ -1,6 +1,6 @@
 
 from haystack import Document
-from typing import List, Optional, Generator, Set, Union
+from typing import List, Optional, Union
 from copy import deepcopy
 from haystack.nodes import PreProcessor
 import re

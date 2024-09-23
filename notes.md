@@ -173,7 +173,7 @@ Friday 19 July,
 
 Note 19 on the tokeniser, I seem to find out what the issue was. 
 
-I basically need to edit the code \u0000 from the tokenire
+I basically need to edit the code \u0000 from the tokenizer.
 
 
 ### Update on 23 July!
@@ -184,3 +184,99 @@ The RAG experiment is considered as completed, the next step is to organize the 
 ### Update on 29 July:
 
 Made the presentation about the model, the next step is to write about it.
+
+
+### Update on 31 July
+
+Now I need to build the pipeline that will serve the workflow. I will be using Kuberenetes with Argo workflows
+
+
+### Update on 13 August 2024
+
+Update on the kubeflow pipeline
+
+
+### Update on the 28 of August 2024
+
+On this date, after hidding for almost 10 days I have to come back to my lovely project. 
+
+I really missed it, i need to review it and contniue working about it.
+
+I have managed to have the data pipeline running and it is populating the database with the daily news data.
+
+I am now working on the ingestion pipeline. 
+
+I nede to work on how to manage secrets for my Kubeflow pipeline with argo worklows.
+
+I also learned how to build workflows with Hera.
+
+https://external-secrets.io/latest/introduction/getting-started/
+
+
+## Update on 
+
+ 10 September, 
+
+ Managed to make the secret work, needto sort out libra
+ ries.
+
+ ```
+   File "/pyroot/lib/python3.12/site-packages/requests/certs.py", line 14, in <module>
+    from certifi import where
+ModuleNotFoundError: No module named 'certifi'
+time="2024-09-10T21:45:50.704Z" level=info msg="sub-process exited" argo=true error="<nil>"
+Error: exit status 1
+ ```
+### Update on 11 September
+
+
+Need to work on Kubenetes networking and access database from the cluster.
+
+https://speakerdeck.com/thockin/kubernetes-and-networks-why-is-this-so-dang-hard?slide=40
+
+Refer to this: https://stackoverflow.com/questions/63344920/access-external-database-from-kubernetes
+
+
+Still nede to figure out this shit..
+
+
+
+### Update 13 September
+
+Learned how to create secrets.
+
+Encrypt the environment variables as base64!
+
+Then creates Kubernetes secrets from them.
+
+Use the `kubeseal` to create the secrets.`
+
+kubeseal --format=yaml --cert=public-key-cert.pem < deployment/kubernetes/database-secret.yaml > deployment/kubernetes/database-sealed-secret.yaml
+
+Then create a service and an endpoint tht will help the pod to connect the pod to the external database service.
+
+
+### Update 16 September... 
+
+Need to update the image.. 
+
+I need to download the image in a volume for the indexing piepline and avoid to install all the sentence transformer pipeline in the docker image.
+
+
+Or use an external storage as volume for the huggingface model, instead of always downloading it in the container.
+
+
+### Update on 17 September
+
+Run the Document ingestion and scale it to multiple instances
+
+Next step will be improving the document ingestion pipeline, we need to run it over all the document. This may need a bit of work.
+
+Split it into two pipeline, the text splitter and the embedding, which will read the embedding and save the output to parquet files in a bucket.
+
+The writer which will read the embedding from the parquet file and save it to the document store, we should be able to run this for one millions documents.
+
+
+Update on the 18 september, 
+
+Need to come back to the document evalutaor.
