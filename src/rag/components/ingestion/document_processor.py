@@ -52,14 +52,16 @@ class DocumentProcessor:
         self.document_embedder = self.init_document_embedder()
         self.document_writer = self.init_document_writer()
 
-    def read_documents(self, table_name: str = 'article') -> CursorResult:
+    def read_documents(self, table_name: str = 'article', use_current_date: bool = True) -> CursorResult:
         """
         Read the documents from the database. and Return a cursor of results
         """
         query = f"""
             SELECT id, title, content, posted_at, website_origin, url, author
-            FROM {table_name} limit 5
+            FROM {table_name}
         """
+        if use_current_date:
+            query = query + " WHERE posted_at::date = CURRENT_DATE"
         connection = generate_database_connection()
 
         return execute_query(connection, query)
@@ -128,15 +130,20 @@ class DocumentProcessor:
 
         return index_pipeline
 
-    def run(self):
-        """Run the document processor Pipeline
+    def run(self, use_current_date: bool = True) -> None:
+        """
+        Run the document processor pipeline.
+
+        This method reads the documents from the database,
+        clean the text, split the text into chunks,
+        compute the embedding for each chunk and
+        save the chunk as document in the document store.
 
         Args:
-            documents (Dataset): _description_
+            use_current_date (bool, optional): Whether to use the current date. Defaults to True.
         """
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        # ned to read document for today only in the database.
-        dataset = self.read_documents()
+        dataset = self.read_documents(
+            table_name="article", use_current_date=use_current_date)
         haystack_documents = [
             Document(content=example.content, id=example.id, meta={
                 "posted_at": example.posted_at,

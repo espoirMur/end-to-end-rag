@@ -268,4 +268,15 @@ Or use an external storage as volume for the huggingface model, instead of alway
 
 ### Update on 17 September
 
-Run the Document ingestion and scale it to multiple instances.ha
+Run the Document ingestion and scale it to multiple instances
+
+Next step will be improving the document ingestion pipeline, we need to run it over all the document. This may need a bit of work.
+
+Split it into two pipeline, the text splitter and the embedding, which will read the embedding and save the output to parquet files in a bucket.
+
+The writer which will read the embedding from the parquet file and save it to the document store, we should be able to run this for one millions documents.
+
+
+Update on the 18 september, 
+
+Need to come back to the document evalutaor.

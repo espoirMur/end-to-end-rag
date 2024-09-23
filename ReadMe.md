@@ -33,7 +33,7 @@ We will be using the following elements:
 
 On deployment with triton server...
 ffff
-This is not a research paper is it an engineer implementation, of an ML system to see if things will work in Production... 
+This is not a research paper it is an engineer implementation, of an ML system to see if things will work in Production... 
 f
 
 
@@ -65,3 +65,6 @@ Other project ideas
 - Scrape the data from edup epst on exetat and analyse the data about diplome d'etat and find which category of school have the best results on the national state exam.
 
 - Build a project where small buisiness can share their portfolio, such as macon, carelleurs, etc.
+
+
+
