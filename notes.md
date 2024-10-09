@@ -168,7 +168,7 @@ I have managed to run the croissant model locally on my laptop which is really f
 
 I discover https://www.reddit.com/r/LocalLLaMA/comments/15ak5k4/short_guide_to_hosting_your_own_llamacpp_openai/
 
-Friday 19 July,
+# Friday 19 July,
 
 
 Note 19 on the tokeniser, I seem to find out what the issue was. 
@@ -280,3 +280,14 @@ The writer which will read the embedding from the parquet file and save it to th
 Update on the 18 september, 
 
 Need to come back to the document evalutaor.
+
+
+### Updates on LBG lunch and learn
+
+- Speak about each component separately.
+
+ - Description about the embeddings the embedding and how we can evaluate them
+
+- Description about the ingestion component and how it is just modern data engineering, Export transform and load.
+
+- Retrieval, explain how we can evaluate a retrieval engine, precision at 5 and 10.

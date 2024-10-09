@@ -11,27 +11,33 @@ class LLamaCppGeneratorComponent:
 
     """
 
-    def __init__(self, api_url: str, model_name: str = "croissantllm/CroissantLLMChat-v0.1") -> None:
+    def __init__(self, api_url: str, prompt: str, model_name: str = "croissantllm/CroissantLLMChat-v0.1") -> None:
         self.api_url = api_url
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.prompt = prompt
 
     def generate_chat_input(self, query: str, documents: list) -> List[Dict]:
         """ generate the prompt to be used for the chat input"""
+
         prompt_template = """
-            Context:
+            DOCUMENTS:
             {% for document in documents %}
-                {{ document }}
+             - {{document}} \n
             {% endfor %}
 
-            Question: {{question}}
-            Answer:
-            """
+            QUESTION:
+           {{question}}
+            INSTRUCTIONS:
+            Answer the users QUESTION using the DOCUMENTS text above.
+            Keep your answer ground in the facts of the DOCUMENTS.
+            If the DOCUMENTS doesn’t contain the facts to answer the QUESTION return None
+        """
         template = Template(prompt_template)
         prompt = template.render(documents=documents, question=query)
 
         chat_input = [
             {"role": "system",
-                "content": "Given the Context:, answer the question in french."},
+                "content": self.prompt},
             {"role": "user", "content": prompt},
         ]
 
@@ -53,7 +59,7 @@ class LLamaCppGeneratorComponent:
 
         data = {
             "prompt": prompt,
-            "n_predict": 128,
+            "n_predict": 512,
             "temperature": 0.3,
             "top_k": 40,
             "top_p": 0.90,

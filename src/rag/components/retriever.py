@@ -1,6 +1,7 @@
-from sentence_transformers import SentenceTransformer, CrossEncoder
+from sentence_transformers import SentenceTransformer
+from src.rag.shared.custom_cross_encoder import CustomCrossEncoder
 from typing import List, Any, Tuple
-from rag.shared.database import execute_query, generate_database_connection
+from src.rag.shared.database import execute_query, generate_database_connection
 from spacy.language import Language
 from textacy import extract
 import spacy
@@ -11,32 +12,40 @@ class HybridRetriever:
 
     """This class will perform hybrid retrieval, a combination of semantic search and keyword search"""
 
-    def __init__(self, model_id: str, spacy_model: str):
+    def __init__(self, cross_encoder_kwargs: dict, spacy_model: str, language: str, sentence_transformer_kwargs: dict):
 
-        sentence_transformer_model = SentenceTransformer(model_id)
-        cross_encoder = CrossEncoder(model_id)
+        sentence_transformer_model = SentenceTransformer(
+            **sentence_transformer_kwargs)
+
+        cross_encoder = CustomCrossEncoder(**cross_encoder_kwargs)
+
         spacy_model: Language = spacy.load(spacy_model)
         self.database_connection = generate_database_connection()
         self.sentence_transformer_model = sentence_transformer_model
         self.cross_encoder = cross_encoder
         self.spacy_model = spacy_model
+        self.language = language
 
-    def semantic_search(self, query: str) -> List[Any]:
-        """this function perporm semmantic searc"""
+    def semantic_search(self, query: str, limit: int = 5) -> List[Any]:
+        """
+        Query the database for semantic search:
+        transform the query string to the embeddings
+        and then retrieve the embedding that are similar to the query string.
+        """
         embedding = self.sentence_transformer_model.encode(query)
-        semantic_search_query = 'SELECT id, chunk FROM article_embeddings ORDER BY chunk_vector <=> %(embedding)s LIMIT 5'
+        semantic_search_query = 'SELECT id, content FROM haystack_documents ORDER BY embedding <=> %(embedding)s LIMIT %(limit)s'
         results = execute_query(self.database_connection, semantic_search_query, {
-                                'embedding': str(embedding.tolist())})
+                                'embedding': str(embedding.tolist()), 'limit': limit})
         return results
 
-    def keyword_search(self, query: str) -> List[Any]:
+    def keyword_search(self, keywords: str, limit: int = 5) -> List[Any]:
         """This function will perform keyword search"""
-        keyword_search_query_string = """SELECT article_id, chunk 
-                                    FROM article_embeddings, websearch_to_tsquery(%(language)s, %(query)s) query
-                                      WHERE to_tsvector(%(language)s, chunk) @@ query 
-                                    ORDER BY ts_rank_cd(to_tsvector(%(language)s, chunk), query) DESC LIMIT %(limit)s;"""
+        keyword_search_query_string = """SELECT id, content 
+                                    FROM haystack_documents, websearch_to_tsquery(%(language)s, %(keywords)s) query
+                                      WHERE to_tsvector(%(language)s, content) @@ query 
+                                    ORDER BY ts_rank_cd(to_tsvector(%(language)s, content), query) DESC LIMIT %(limit)s;"""
         results = execute_query(self.database_connection, keyword_search_query_string, {
-                                'language': 'unaccent_french', 'query': query, 'limit': 5})
+                                'language': self.language, 'keywords': keywords, 'limit': limit})
         return results
 
     def perform_keyword_extraction(self, text: str) -> str:
