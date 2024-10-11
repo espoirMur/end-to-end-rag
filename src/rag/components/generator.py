@@ -5,21 +5,7 @@ from typing import List, Dict
 from jinja2 import Template
 
 
-class LLamaCppGeneratorComponent:
-    """
-    This class is responsible for generating response using the Llamma.cpp api
-
-    """
-
-    def __init__(self, api_url: str, prompt: str, model_name: str = "croissantllm/CroissantLLMChat-v0.1") -> None:
-        self.api_url = api_url
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.prompt = prompt
-
-    def generate_chat_input(self, query: str, documents: list) -> List[Dict]:
-        """ generate the prompt to be used for the chat input"""
-
-        prompt_template = """
+RAG_PROMPT_TEMPLATE = """
             DOCUMENTS:
             {% for document in documents %}
              - {{document}} \n
@@ -32,8 +18,24 @@ class LLamaCppGeneratorComponent:
             Keep your answer ground in the facts of the DOCUMENTS.
             If the DOCUMENTS doesn’t contain the facts to answer the QUESTION return None
         """
+
+
+class LLamaCppGeneratorComponent:
+    """
+    This class is responsible for generating response using the Llamma.cpp api
+
+    """
+
+    def __init__(self, api_url: str, prompt: str, model_name: str = "croissantllm/CroissantLLMChat-v0.1") -> None:
+        self.api_url = api_url
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.prompt = prompt
+
+    def generate_chat_input(self, template_values: dict, prompt_template: str = RAG_PROMPT_TEMPLATE) -> List[Dict]:
+        """ generate the prompt to be used for the chat input"""
+
         template = Template(prompt_template)
-        prompt = template.render(documents=documents, question=query)
+        prompt = template.render(**template_values)
 
         chat_input = [
             {"role": "system",
@@ -59,7 +61,7 @@ class LLamaCppGeneratorComponent:
 
         data = {
             "prompt": prompt,
-            "n_predict": 512,
+            "n_predict": 768,
             "temperature": 0.3,
             "top_k": 40,
             "top_p": 0.90,
@@ -74,15 +76,16 @@ class LLamaCppGeneratorComponent:
         # Send the POST request
         try:
             response = requests.post(
-                f"{self.api_url}/completion", headers=headers, data=json_data, timeout=120)
+                f"{self.api_url}/completion", headers=headers, data=json_data, timeout=300)
             return response.json()["content"]
         except requests.exceptions.RequestException as e:
             print(e)
             return None
 
-    def run(self, query: str, documents: list) -> str:
+    def run(self, template_values: dict, prompt_template: str = RAG_PROMPT_TEMPLATE) -> str:
         """Generate response using the Llamma.cpp api"""
-        chat_input = self.generate_chat_input(query, documents)
+        chat_input = self.generate_chat_input(
+            template_values, prompt_template)
         chat_tokens = self.tokenizer.apply_chat_template(
             chat_input, tokenize=False, add_generation_prompt=True)
         response = self.generate_response(chat_tokens)
