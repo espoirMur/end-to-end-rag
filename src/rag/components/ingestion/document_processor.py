@@ -1,6 +1,6 @@
 from datetime import datetime
 from shared.database import generate_database_connection, execute_query, postgres_uri
-from haystack import Document
+from haystack.dataclasses import Document
 from haystack.components.preprocessors import DocumentCleaner
 from shared.document_store import MyPgVectorDocumentStore
 from ingestion.document_splitter import RecursiveCharacterTextSplitterComponent

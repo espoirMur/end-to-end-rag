@@ -1,4 +1,5 @@
-from haystack import component, Document
+from haystack.core.component import component
+from haystack.dataclasses import Document
 from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from unicodedata import normalize as unicode_normalize

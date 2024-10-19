@@ -1,36 +1,34 @@
-
-from haystack import Document
-from typing import List, Optional, Union
+from haystack.core.component import component
+from haystack.dataclasses import Document
 from copy import deepcopy
-from haystack.nodes import PreProcessor
+from typing import Union, List, Optional
+from bertopic import BERTopic
 import re
 from unicodedata import normalize as unicode_normalize
 
 
-class CustomCleaner(PreProcessor):
+@component
+class CustomCleaner:
     def __init__(self, custom_preprocessor=None, **kwargs):
-        super().__init__(**kwargs)
         self.custom_preprocessor = custom_preprocessor
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def clean(
         self,
         document: Union[dict, Document],
         clean_whitespace: bool,
-        clean_header_footer: bool,
         clean_empty_lines: bool,
-        remove_substrings: List[str],
-        id_hash_keys: Optional[List[str]] = None,
+        remove_substrings: List[str]
     ) -> Document:
         """
 
         Perform document cleaning on a single document and return a single document. This method will deal with whitespaces, headers, footers
         and empty lines. Its exact functionality is defined by the parameters passed into PreProcessor.__init__().
         """
-        if id_hash_keys is None:
-            id_hash_keys = self.id_hash_keys
 
         if isinstance(document, dict):
-            document = Document.from_dict(document, id_hash_keys=id_hash_keys)
+            document = Document.from_dict(document)
 
         # Mainly needed for type checking
         if not isinstance(document, Document):
@@ -38,10 +36,6 @@ class CustomCleaner(PreProcessor):
                 "Document must not be of type 'dict' but of type 'Document'.")
         text = document.content
         text = self.custom_preprocessor(text)
-        if clean_header_footer:
-            text = self._find_and_remove_header_footer(
-                text, n_chars=300, n_first_pages_to_ignore=1, n_last_pages_to_ignore=1
-            )
 
         if clean_whitespace:
             lines = text.splitlines()
@@ -61,9 +55,24 @@ class CustomCleaner(PreProcessor):
         if text != document.content:
             document = deepcopy(document)
             document.content = text
-        document.content = self.pre
+        document.content = text
 
         return document
+
+    @component.output_types(documents=List[Document])
+    def run(self, texts: List[Document]):
+        documents = []
+        for doc in texts:
+            doc = self.clean(
+                document=doc,
+                clean_whitespace=True,
+                clean_empty_lines=True,
+                remove_substrings=[
+                    "This post has already been read \d+ times!"],
+            )
+            documents.append(doc)
+
+        return {"documents": documents}
 
 
 def pre_clean_document(text) -> str:

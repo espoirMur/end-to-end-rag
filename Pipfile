@@ -26,6 +26,9 @@ websocket-client = ">=0.32"
 kfp= "==2.7.0"
 docker= "==7.1.0"
 hera = "==5.16.2"
+haystack-ai = "==2.2.4"
+bertopic = "==0.16.4"
+hdbscan = "==0.8.39"
 
 [dev-packages]
 jupyterlab = "*"
