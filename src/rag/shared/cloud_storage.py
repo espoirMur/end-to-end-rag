@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import b2sdk.v2 as back_blaze
 from dotenv import load_dotenv
 
@@ -10,9 +11,11 @@ class BackBlazeCloudStorage:
     It will instantiate the cloud storage client and provide methods for uploading and downloading files
     """
 
-    def load_environment_variables(self):
+    def load_environment_variables(self, environment: str = "local") -> Tuple[str, str]:
         """ Load an environment variables and return them, raise a value error if one of them is empty."""
-        load_dotenv()
+        current_directory = Path.cwd()
+        env_file = current_directory.joinpath(f"env_{environment}")
+        load_dotenv(env_file)
         application_key_id = os.getenv("BACK_BLAZE_KEY_ID")
         application_key = os.getenv("BACK_BLAZE_APPLICATION_KEY")
 
@@ -21,8 +24,9 @@ class BackBlazeCloudStorage:
 
         return application_key_id, application_key
 
-    def __init__(self) -> None:
-        application_key_id, application_key = self.load_environment_variables()
+    def __init__(self, environment: str = "local") -> None:
+        application_key_id, application_key = self.load_environment_variables(
+            environment=environment)
         info = back_blaze.InMemoryAccountInfo()
         self.back_blaze_api = back_blaze.B2Api(info)
         self.back_blaze_api.authorize_account(
