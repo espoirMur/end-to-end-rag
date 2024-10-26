@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import b2sdk.v2 as back_blaze
 from dotenv import load_dotenv
+from typing import Tuple
 
 
 class BackBlazeCloudStorage:

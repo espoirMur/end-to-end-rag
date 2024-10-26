@@ -5,6 +5,12 @@ from scipy.cluster.hierarchy import linkage
 import numpy as np
 from sklearn.metrics import silhouette_score
 from scipy.cluster.hierarchy import fcluster
+from typing import Dict
+
+DEFAULT_TRANSFORMER_KWARGS = {"trust_remote_code": True,
+                              "device": "cpu",
+                              "config_kwargs": {"use_memory_efficient_attention": False,
+                                                "unpad_inputs": False}}
 
 
 class HierachicalClusterModeler:
@@ -19,27 +25,26 @@ class HierachicalClusterModeler:
         self.current_directory = current_directory
         self.sentence_transformer_model = self.init_sentence_transformer()
 
-    def init_sentence_transformer(self):
+    def init_sentence_transformer(self, transformer_kwargs: Dict = DEFAULT_TRANSFORMER_KWARGS) -> SentenceTransformer:
+        """ Initialize the sentence transformer model """
+
         embedding_model_path = self.current_directory.joinpath(
             "models", self.embedding_model_id)
         model_path = self.current_directory.joinpath(self.embedding_model_id)
-
-        transformer_kwargs = {"model_name_or_path": embedding_model_path.__str__(),
-                              "trust_remote_code": True,
-                              "device": "cpu",
-                              "config_kwargs": {"use_memory_efficient_attention": False,
-                                                "unpad_inputs": False},
-                              "cache_folder": model_path}
+        transformer_kwargs["cache_folder"] = model_path
+        transformer_kwargs["model_name_or_path"] = embedding_model_path.__str__()
         sentence_transformer_model = SentenceTransformer(
             **transformer_kwargs)
         return sentence_transformer_model
 
     def embed_documents(self):
+        """ Embed the documents using the sentence transformer model """
         today_news_embeddings = self.sentence_transformer_model.encode(
-            self.documents)
+            self.documents.content, show_progress_bar=True)
         return today_news_embeddings
 
     def compute_linkage(self, today_news_embeddings: np.array, method="complete", metric="cosine"):
+        """ Compute the sklearn linkage"""
         mergings = linkage(today_news_embeddings,
                            method=method, metric=metric)
         return mergings
