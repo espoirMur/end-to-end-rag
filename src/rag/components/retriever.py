@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
-from src.rag.shared.custom_cross_encoder import CustomCrossEncoder
+from src.shared.custom_cross_encoder import CustomCrossEncoder
 from typing import List, Any, Tuple
-from src.rag.shared.database import execute_query, generate_database_connection
+from src.shared.database import execute_query, generate_database_connection
 from spacy.language import Language
 from textacy import extract
 import spacy

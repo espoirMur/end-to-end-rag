@@ -6,11 +6,13 @@ import numpy as np
 from sklearn.metrics import silhouette_score
 from scipy.cluster.hierarchy import fcluster
 from typing import Dict
+from src.shared.logger import setup_logger
 
 DEFAULT_TRANSFORMER_KWARGS = {"trust_remote_code": True,
                               "device": "cpu",
                               "config_kwargs": {"use_memory_efficient_attention": False,
                                                 "unpad_inputs": False}}
+logger = setup_logger("cluster_modeler")
 
 
 class HierachicalClusterModeler:
@@ -81,9 +83,25 @@ class HierachicalClusterModeler:
         vectors = embeddings[document_index]
         return self.sentence_transformer_model.similarity(vectors,  vectors)
 
-    def run(self):
+    def select_top_clusters(self, news_df: pd.DataFrame) -> pd.DataFrame:
+        """ select the clusters with the more than two documents """
+        cluster_counts = news_df["labels"].value_counts()
+        labels_with_more_than_one = cluster_counts[cluster_counts > 1].index
+        important_news_df = news_df.loc[news_df.labels.isin(
+            labels_with_more_than_one)]
+        return important_news_df
+
+    def run(self) -> pd.DataFrame:
         today_news_embeddings = self.embed_documents()
         mergings = self.compute_linkage(today_news_embeddings)
-        _, return_labels, _, _ = self.select_best_distance(
+        _, return_labels, number_of_clusters, best_k = self.select_best_distance(
             today_news_embeddings, mergings)
+        logger.info(
+            f" finished clustering with best_k = {best_k} with and number_of_clusters = {len(set(number_of_clusters))}")
         self.documents["labels"] = return_labels
+        important_news_df = self.select_top_clusters(self.documents)
+        logger.info(
+            f"the important news data is of shape: {important_news_df.shape[0]}")
+        logger.info(
+            f"the number of labels are {important_news_df.labels.nunique()}")
+        return important_news_df

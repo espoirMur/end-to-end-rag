@@ -1,12 +1,15 @@
 from datetime import datetime
-from src.rag.shared.database import execute_query, generate_database_connection
+from src.shared.database import execute_query, generate_database_connection
 from dotenv import load_dotenv
 from pathlib import Path
 from os import getenv
 from typing import Dict
 import pandas as pd
-from src.rag.shared.cloud_storage import BackBlazeCloudStorage
+from src.shared.cloud_storage import BackBlazeCloudStorage
 from tempfile import NamedTemporaryFile
+from src.shared.logger import setup_logger
+
+logger = setup_logger("data_puller")
 
 
 class DataPuller:
@@ -53,6 +56,7 @@ class DataPuller:
         article_query = f"select id as database_id, content, title, posted_at,url from article where posted_at::date = '{self.date}'"
         today_articles = execute_query(connection, article_query)
         news_df = pd.DataFrame(today_articles)
+        logger.info(f"today news data is of shape: {news_df.shape[0]}")
         news_df.columns = ["database_id", "content", "title",
                            "posted_at", "url"]
         news_df = news_df.drop_duplicates(
@@ -84,3 +88,4 @@ class DataPuller:
                 file_name=f"news-clusters-{self.date}.csv",
                 metadata={"date": datetime.now().strftime("%Y-%m-%d")}
             )
+            logger.info(f"Saved {self.date} news to the cloud bucket")
