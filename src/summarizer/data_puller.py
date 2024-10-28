@@ -53,7 +53,7 @@ class DataPuller:
         database_credentials = self.load_database_credentials()
 
         connection = generate_database_connection(database_credentials)
-        article_query = f"select id as database_id, content, title, posted_at,url from article where posted_at::date = '{self.date}'"
+        article_query = f"SELECT id AS database_id, content, title, posted_at, url FROM article WHERE posted_at::date BETWEEN '{self.date}' AND CURRENT_DATE"
         today_articles = execute_query(connection, article_query)
         news_df = pd.DataFrame(today_articles)
         logger.info(f"today news data is of shape: {news_df.shape[0]}")
