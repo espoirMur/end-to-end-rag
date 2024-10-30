@@ -8,3 +8,5 @@
 
 Run it with 
 `docker run -v $(pwd)/src:/app/src --env-file .env_prod espymur/summarization:dev python src/summarizer/main.py -e prod -st b2 -d 7`
+
+

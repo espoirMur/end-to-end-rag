@@ -291,3 +291,14 @@ Need to come back to the document evalutaor.
 - Description about the ingestion component and how it is just modern data engineering, Export transform and load.
 
 - Retrieval, explain how we can evaluate a retrieval engine, precision at 5 and 10.
+
+
+### Update October 28 2024
+
+Build a summarizer need to make sure the volume are running inside the docker container.
+
+Update the 30 October 2024
+
+The news clustering is working.
+
+Next we need to build a proof of concept that will generate the daily summary for the news.

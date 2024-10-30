@@ -33,7 +33,8 @@ class BackBlazeCloudStorage:
         self.back_blaze_api.authorize_account(
             "production", application_key_id, application_key)
 
-    def get_bucket(self, bucket_name: str):
+    def get_bucket(self, bucket_name: str) -> back_blaze.Bucket:
+        """ get the bucke with the given name   """
         return self.back_blaze_api.get_bucket_by_name(bucket_name)
 
     def upload_file(self, bucket_name: str, file_path: str, file_name: str, metadata: dict) -> str:

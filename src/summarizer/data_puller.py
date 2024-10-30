@@ -80,12 +80,13 @@ class DataPuller:
 
     def save_to_blackbaze_bucket(self, data: pd.DataFrame) -> None:
         """ Save data to a cloud bucket."""
+        today = datetime.now().strftime("%Y-%m-%d")
         with NamedTemporaryFile(delete=True, suffix=".csv") as temp_file:
             data.to_csv(temp_file)
             self.cloud_storage.upload_file(
                 bucket_name="congonews-clusters",
                 file_path=temp_file.name,
-                file_name=f"news-clusters-{self.date}.csv",
+                file_name=f"news-clusters-{today}-to-{self.date}.csv",
                 metadata={"date": datetime.now().strftime("%Y-%m-%d")}
             )
             logger.info(f"Saved {self.date} news to the cloud bucket")
