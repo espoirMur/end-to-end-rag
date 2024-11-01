@@ -304,4 +304,11 @@ The news clustering is working.
 Next we need to build a proof of concept that will generate the daily summary for the news.
 
 
-### Update on 31 October 2023
+### Update on 31 October 2024
+
+
+### Update on 1 November 2024
+
+News summarizer deployment
+
+I can deploy the summarizer as a docker container and run it on my cluster, it will be running everyday at 23:00. The component is ready and can be deployed.
