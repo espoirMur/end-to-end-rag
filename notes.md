@@ -302,3 +302,6 @@ Update the 30 October 2024
 The news clustering is working.
 
 Next we need to build a proof of concept that will generate the daily summary for the news.
+
+
+### Update on 31 October 2023

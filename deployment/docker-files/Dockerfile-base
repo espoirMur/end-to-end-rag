@@ -57,5 +57,3 @@ WORKDIR ${WORKING_DIR}
 RUN chown -R es.py:es.py ${WORKING_DIR}
 RUN chmod -R 755 ${WORKING_DIR}
 USER es.py
-
-
