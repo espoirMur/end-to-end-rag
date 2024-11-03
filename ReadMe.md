@@ -29,6 +29,8 @@ We will be using the following elements:
  - https://www.pinecone.io/learn/hybrid-search-intro/
 
  -  https://haystack.deepset.ai/blog/haystack-nvidia-nim-rag-guide
+
+ - https://www.cloudraft.io/blog/deploy-llms-on-kubernetes-using-openllm
  
 
 On deployment with triton server...
