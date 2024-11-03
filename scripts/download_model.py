@@ -18,4 +18,6 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	local_path = Path(args.output_dir)
 	model_name = args.model_name_or_path
-	snapshot_download(model_name, local_path=local_path)
+	snapshot_download(
+		model_name, local_path=local_path, force_download=True, revision="main"
+	)
