@@ -1,3 +1,4 @@
+# todo: This is outdated, need to be updated. It should be able to use the Dockerfle-base to accomplish the same
 FROM python:3.12 as base
 LABEL maintainer="Espoir Murhabazi<espoir.mur [] gmail>"
 
