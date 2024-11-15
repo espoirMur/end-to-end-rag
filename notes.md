@@ -314,3 +314,9 @@ News summarizer deployment
 I can deploy the summarizer as a docker container and run it on my cluster, it will be running everyday at 23:00. The component is ready and can be deployed.
 
 Push the model stuff on thee cluster and run the sheduler there
+
+
+### Update on the 04/11/2024
+
+Done with the clustering app, deploy the docker container, the next stage is to build to deploy the model that does the summarization
+
