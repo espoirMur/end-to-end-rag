@@ -33,6 +33,7 @@ FROM python:3.10-slim AS runtime
 ARG COMPONENT_NAME
 ARG COMPONENT_PATH
 ENV PYROOT /opt/venv
+ARG PIP_SECTION
 ENV PYTHONUSERBASE $PYROOT
 
 # copy only the content of virtualenv
