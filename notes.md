@@ -9,3 +9,8 @@ Export PyMuPDF
 https://pymupdf.readthedocs.io/en/latest/page.html#Page.find_tables
 
 It seems to be well documented.
+
+
+continue here
+
+https://github.dev/langchain-ai/langchain/blob/master/libs/community/langchain_community/document_loaders/parsers/pdf.py
