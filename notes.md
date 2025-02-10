@@ -14,3 +14,14 @@ It seems to be well documented.
 continue here
 
 https://github.dev/langchain-ai/langchain/blob/master/libs/community/langchain_community/document_loaders/parsers/pdf.py
+
+
+
+DAte 4/02/2025
+
+The parser is working, now need to work on the chunking and 
+
+https://www.llamaindex.ai/blog/mastering-pdfs-extracting-sections-headings-paragraphs-and-tables-with-cutting-edge-parser-faea18870125
+
+
+Tommorowo we need to work on the chunkings
