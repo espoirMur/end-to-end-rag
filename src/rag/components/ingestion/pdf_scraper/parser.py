@@ -4,7 +4,6 @@ from typing import Dict, List, Optional
 
 from openparse import DocumentParser
 from openparse.schemas import ParsedDocument
-from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
 from src.shared.logger import setup_logger
@@ -19,7 +18,6 @@ class MyDocumentParser:
 		self,
 		output_path: Path,
 		document_parser_kwargs: Dict = {},
-		embedding_model: SentenceTransformer = None,
 	):
 		"""
 		Initialize the MyDocumentParser.
@@ -31,33 +29,6 @@ class MyDocumentParser:
 		self.document_parser_kwargs = document_parser_kwargs
 		self.parser = DocumentParser(**document_parser_kwargs)
 		self.output_path = output_path
-		self.embedding_model = embedding_model
-
-	def compute_embeddings(self, document: ParsedDocument) -> ParsedDocument:
-		"""
-		Computes embeddings for the nodes in the given ParsedDocument using the specified embedding model.
-
-		Args:
-		    document (ParsedDocument): The document containing nodes for which embeddings need to be computed.
-
-		Returns:
-		    ParsedDocument: The document with computed embeddings for each node.
-
-		Note:
-		    If the embedding model is not set (None), the document is returned without any modifications.
-		"""
-		if self.embedding_model is None:
-			return document
-
-		nodes = document.nodes
-		node_embedding = self.embedding_model.encode(
-			[node.text for node in nodes],
-			convert_to_tensor=False,
-			show_progress_bar=True,
-		)
-		for node, embedding in zip(nodes, node_embedding):
-			node.embedding = embedding.tolist()
-		return document
 
 	def parse_document(self, document_path: Path) -> Optional[ParsedDocument]:
 		"""
@@ -69,9 +40,8 @@ class MyDocumentParser:
 		try:
 			parsed_basic_doc = self.parser.parse(document_path)
 			logger.info(f"Successfully parsed {document_path}")
-			parsed_doc_with_embeddings = self.compute_embeddings(parsed_basic_doc)
-			self.save_parsed_document(parsed_doc_with_embeddings)
-			return parsed_doc_with_embeddings
+			self.save_parsed_document(parsed_basic_doc)
+			return parsed_basic_doc
 		except Exception as e:
 			logger.error(f"Error parsing {document_path}: {e}")
 			return None
