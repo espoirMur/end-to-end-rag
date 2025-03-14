@@ -66,19 +66,3 @@ class MyDocumentParser:
 				)
 			)
 		return results
-
-	def save_parsed_document(self, parsed_document: ParsedDocument):
-		"""
-		Save parsed documents to the output path.
-
-		Args:
-		    parsed_document (ParsedDocument): The parsed document to be saved.
-		"""
-		if parsed_document is None:
-			logger.warning("Skipping None document")
-			return
-
-		output_file = self.output_path.joinpath(f"{parsed_document.filename}.json")
-		with open(output_file, "w") as f:
-			f.write(parsed_document.model_dump_json())
-		logger.info(f"Saved parsed document to {output_file}")
