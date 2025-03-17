@@ -23,20 +23,16 @@ class EmbeddingComputer:
 		"""
 		all_nodes = self.collect_node_text(documents)
 		all_embeddings = self.process_batches(all_nodes, batch_size)
-		self.assign_embeddings(documents, all_embeddings)
+		documents = self.assign_embeddings(documents, all_embeddings)
 		return documents
 
 	def collect_node_text(self, documents: List[ParsedDocument]) -> List[str]:
 		"""Collect all nodes with text from the documents."""
 		all_nodes = []
 		for doc in documents:
-			for node in doc.nodes:
-				print(" is this node empty ", node.text)
-				if node.text != "":
-					print(f"passage: {node.text}")
-					all_nodes.append(f"passage: {node.text}")
-				else:
-					doc.nodes.remove(node)
+			all_nodes.extend(doc.nodes)
+		all_nodes = [f"passage: {node.text}" for node in all_nodes]
+
 		return all_nodes
 
 	def process_batches(self, all_nodes: List[str], batch_size: int) -> List:
@@ -44,7 +40,6 @@ class EmbeddingComputer:
 		all_embeddings = []
 		for i in range(0, len(all_nodes), batch_size):
 			batch_nodes = all_nodes[i : i + batch_size]
-			print(f"Computing embeddings for batch {i} to {i + batch_size}")
 			batch_embedding = self.model.encode(
 				batch_nodes,
 				convert_to_tensor=False,
@@ -56,10 +51,11 @@ class EmbeddingComputer:
 
 	def assign_embeddings(
 		self, documents: List[ParsedDocument], all_embeddings: List
-	) -> None:
+	) -> List[ParsedDocument]:
 		"""Assign embeddings to nodes in the documents."""
 		embedding_index = 0
 		for doc in documents:
 			for node in doc.nodes:
-				node.embedding = all_embeddings[embedding_index]
+				node.embedding = all_embeddings[embedding_index].tolist()
 				embedding_index += 1
+		return documents
