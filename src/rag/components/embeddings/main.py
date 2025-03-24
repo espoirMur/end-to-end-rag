@@ -3,6 +3,9 @@ from pathlib import Path
 
 from src.rag.components.embeddings.embeddings import EmbeddingComputer
 from src.rag.components.shared.io import IOManager
+from src.shared.logger import setup_logger
+
+logger = setup_logger("embeddings computation")
 
 documents_path = Path.home()
 
@@ -28,10 +31,21 @@ if __name__ == "__main__":
 		default=100,
 		help="Number of documents to load at a time.",
 	)
+	parser.add_argument(
+		"--batch_size",
+		type=int,
+		default=4,
+		help="Batch size for computing embeddings.",
+	)
 	args = parser.parse_args()
 
 	chunk_size = args.chunk_size
-	for i in range(0, len(io_manager.all_json_documents[:-5]), chunk_size):
+	batch_size = args.batch_size
+	for i in range(0, len(io_manager.all_json_documents[:5]), chunk_size):
+		logger.info(f"Processing documents from index {i} to {i + chunk_size}")
 		documents = io_manager.load_documents(i, i + chunk_size)
-		documents = embedding_computer.compute_embeddings(documents, batch_size=4)
+		documents = embedding_computer.compute_embeddings(
+			documents, batch_size=batch_size
+		)
 		io_manager.save_parsed_documents(documents)
+		logger.info(f"Finished processing documents from index {i} to {i + chunk_size}")

@@ -21,6 +21,7 @@ class IOManager:
 		self.output_path = self.document_path.parent.joinpath(
 			"parsed_documents_with_embedding"
 		)
+		self.output_path.mkdir(parents=True, exist_ok=True)
 
 	def save_parsed_document(self, parsed_document: ParsedDocument):
 		"""
@@ -43,16 +44,14 @@ class IOManager:
 		try:
 			doc_dict = json.loads(json_string)
 			for node in doc_dict["nodes"]:
-				node.elements = ()
-				doc_dict["last_modified_date"] = parser.parse(
-					doc_dict["last_modified_date"]
-				).date()
-				doc_dict["creation_date"] = parser.parse(
-					doc_dict["creation_date"]
-				).date()
-				doc_dict["last_accessed_date"] = parser.parse(
-					doc_dict["last_accessed_date"]
-				).date()
+				node["elements"] = ()
+			doc_dict["last_modified_date"] = parser.parse(
+				doc_dict["last_modified_date"]
+			).date()
+			doc_dict["creation_date"] = parser.parse(doc_dict["creation_date"]).date()
+			doc_dict["last_accessed_date"] = parser.parse(
+				doc_dict["last_accessed_date"]
+			).date()
 			cleaned_document = CleanedDocument(**doc_dict)
 			return cleaned_document
 		except json.JSONDecodeError as e:
@@ -63,7 +62,8 @@ class IOManager:
 		documents = []
 		for path in self.all_json_documents[start_index:end_index]:
 			document = self.load_document(path)
-			documents.append(document)
+			if document:
+				documents.append(document)
 		return documents
 
 	def save_parsed_documents(self, parsed_documents: List[ParsedDocument]):
