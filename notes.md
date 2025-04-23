@@ -25,3 +25,8 @@ https://www.llamaindex.ai/blog/mastering-pdfs-extracting-sections-headings-parag
 
 
 Tommorowo we need to work on the chunkings
+
+
+#### Updates on 24 /03/2025
+
+- Need to save the embedding of the documents 

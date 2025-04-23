@@ -8,3 +8,4 @@ datasets/
 ***.env**
 public-key-cert.pem
 deployment/kubernetes/database-secret.yaml
+volumes/

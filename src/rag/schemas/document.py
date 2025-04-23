@@ -45,3 +45,24 @@ class Document(BaseModel):
 	last_accessed_date: datetime
 	creation_date: datetime
 	file_size: int
+
+	def convert_to_milvus(self) -> List[Dict[str, Any]]:
+		"""Convert each node in the document to a dictionary format suitable for Milvus."""
+		entities = []
+		for node in self.nodes:
+			entity = {
+				"id": node.node_id,
+				"embeddings": node.embedding,
+				"metadata": {
+					"filename": self.filename,
+					"num_pages": self.num_pages,
+					"coordinate_system": self.coordinate_system,
+					"last_modified_date": self.last_modified_date.isoformat(),
+					"last_accessed_date": self.last_accessed_date.isoformat(),
+					"creation_date": self.creation_date.isoformat(),
+					"file_size": self.file_size,
+				},
+				"text": node.text,
+			}
+			entities.append(entity)
+		return entities
