@@ -101,3 +101,24 @@ class MilvusDatabase:
 			logger.info(f"Deleted collection '{collection_name}'.")
 		else:
 			logger.info(f"Collection '{collection_name}' does not exist.")
+
+	def search(self, query_vector: List[float], top_k: int = 5) -> List[Dict]:
+		if self.client is None:
+			self.connect()
+
+		if not self.client.has_collection(self.collection_name):
+			logger.error(f"Collection '{self.collection_name}' does not exist.")
+			return []
+
+		try:
+			results = self.client.search(
+				collection_name=self.collection_name,
+				data=query_vector,
+				limit=top_k,
+				output_fields=["text", "metadata"],
+				params={"metric_type": "L2"},
+			)
+			return results
+		except Exception as e:
+			logger.error(f"Failed to search in Milvus: {str(e)}")
+			return []

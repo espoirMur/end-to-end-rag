@@ -3,6 +3,10 @@ from typing import List
 from openparse.schemas import ParsedDocument
 from sentence_transformers import SentenceTransformer
 
+from src.shared.logger import setup_logger
+
+logger = setup_logger("computing embeddings")
+
 
 class EmbeddingComputer:
 	def __init__(self, model_name: str) -> None:
@@ -10,8 +14,12 @@ class EmbeddingComputer:
 		self.init_model()
 
 	def init_model(self):
-		model = SentenceTransformer(self.model_name)
-		self.model = model
+		if getattr(self, "model", None):
+			logger.info("model is already initialized")
+		else:
+			logger.info("initializing model")
+			model = SentenceTransformer(self.model_name)
+			self.model = model
 
 	def compute_embeddings(
 		self, documents: List[ParsedDocument], batch_size=4
