@@ -1,23 +1,31 @@
 from typing import Dict, List
 
+from injector import inject, singleton
 from pymilvus import DataType, MilvusClient
 
+from src.rag.components.shared.databases.milvus_settings import MilvusSettings
 from src.shared.logger import setup_logger
 
 logger = setup_logger("milvus_database")
 
 
+@singleton
 class MilvusDatabase:
-	def __init__(self, host, token, vector_dimension, collection_name):
-		self.host = host
-		self.token = token
-		self.vector_dimension = vector_dimension
-		self.collection_name = collection_name
+	@inject
+	def __init__(self, milvus_settings: MilvusSettings):
+		"""This initializes the Milvus database client."""
+		self.settings = milvus_settings
+		self.uri = self.settings.uri
+		self.token = self.settings.token
+		self.vector_dimension = self.settings.vector_dimension
+		self.collection_name = self.settings.collection_name
+
+		self.connect()
 
 	def connect(self):
 		logger.info("Connecting to Milvus...")
 		try:
-			self.client = MilvusClient(uri=self.host, token=self.token)
+			self.client = MilvusClient(uri=self.uri, token=self.token)
 
 			logger.info("Connected to Milvus successfully.")
 		except Exception as e:

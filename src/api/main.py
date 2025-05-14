@@ -1,12 +1,4 @@
-from fastapi import FastAPI
+from src.api.app_factory import create_app
+from src.api.dependencies_ingestion import global_injector
 
-from api.routes import router as api_router
-
-app = FastAPI()
-
-app.include_router(api_router, prefix="/api")
-
-
-@app.get("/")
-async def root():
-	return {"message": "Welcome to my retrieval app!"}
+app = create_app(global_injector)

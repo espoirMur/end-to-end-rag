@@ -1,15 +1,19 @@
 from typing import List
 
+from injector import inject, singleton
 from openparse.schemas import ParsedDocument
 from sentence_transformers import SentenceTransformer
 
+from src.api.schemas import ModelName
 from src.shared.logger import setup_logger
 
 logger = setup_logger("computing embeddings")
 
 
+@singleton
 class EmbeddingComputer:
-	def __init__(self, model_name: str) -> None:
+	@inject
+	def __init__(self, model_name: ModelName) -> None:
 		self.model_name = model_name
 		self.init_model()
 
@@ -18,8 +22,10 @@ class EmbeddingComputer:
 			logger.info("model is already initialized")
 		else:
 			logger.info("initializing model")
+			logger.info(f"model name: {self.model_name}")
 			model = SentenceTransformer(self.model_name)
 			self.model = model
+			logger.info("model initialized")
 
 	def compute_embeddings(
 		self, documents: List[ParsedDocument], batch_size=4
@@ -33,6 +39,16 @@ class EmbeddingComputer:
 		all_embeddings = self.process_batches(all_nodes, batch_size)
 		documents = self.assign_embeddings(documents, all_embeddings)
 		return documents
+
+	def compute_single_text_embedding(self, text: str) -> List[float]:
+		"""compute the embedding of a single text"""
+		embedding = self.model.encode(
+			[text],
+			convert_to_tensor=False,
+			show_progress_bar=True,
+			normalize_embeddings=True,
+		)
+		return embedding.tolist()
 
 	def collect_node_text(self, documents: List[ParsedDocument]) -> List[str]:
 		"""Collect all nodes with text from the documents."""

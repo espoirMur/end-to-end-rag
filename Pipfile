@@ -34,6 +34,7 @@ hera = "==5.16.2"
 haystack-ai = "==2.2.4"
 bertopic = "==0.16.4"
 hdbscan = "==0.8.39"
+uvicorn = "*"
 
 [dev-packages]
 notebook = "==7.2.2"
@@ -59,18 +60,8 @@ fastapi = "==0.109.2"
 sqlalchemy = "==2.0.27"
 pgvector = "==0.2.4"
 psycopg2-binary = "==2.9.9"
-uvicorn = {extras = ["standard"], version = "0.27.1"}
-
-[news-summarizer]
-sqlalchemy = "==2.0.27"
-pgvector = "==0.2.4"
-psycopg2-binary = "==2.9.9"
-b2sdk= "==2.5.0"
-scikit-learn = "==1.4.0"
-pandas = "==2.2.3"
-sentence-transformers = "==2.3.1"
-requests = "==2.32.3"
-python-dotenv = "==1.0.1"
+uvicorn = "*"
+injector = "*"
 
 [requires]
 python_version = "3.10"

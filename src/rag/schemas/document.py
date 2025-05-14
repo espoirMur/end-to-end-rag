@@ -66,3 +66,11 @@ class Document(BaseModel):
 			}
 			entities.append(entity)
 		return entities
+
+
+class MilvusDocument(BaseModel):
+	"""A document to be stored in Milvus."""
+
+	id: str
+	metadata: Dict[str, Any]
+	text: str
