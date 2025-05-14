@@ -18,7 +18,7 @@ We will be using the following elements:
 - https://huggingface.co/blog/how-to-generate
 
 - Infrastructure:
- https://www.runpod.io/console/gpu-cloud
+ - https://www.runpod.io/console/gpu-cloud
 
  - https://blog.griddynamics.com/retrieval-augmented-generation-llm/
 
