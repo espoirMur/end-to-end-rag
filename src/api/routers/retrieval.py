@@ -1,14 +1,17 @@
+from typing import List
+
 from fastapi import APIRouter, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 from src.api.schemas import Query
 from src.api.services.retrieval import RetrieverServices
+from src.rag.schemas.document import MilvusDocument
 
 router = APIRouter()
 
 
-@router.post("/retriever")
+@router.post("/retriever", response_model=List[MilvusDocument])
 def retrieve(request: Request, query: Query) -> JSONResponse:
 	"""retrieve the top k documents from the database given the query"""
 	retriever_services = request.state.injector.get(RetrieverServices)

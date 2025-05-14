@@ -5,6 +5,9 @@ from injector import inject, singleton
 from src.rag.components.embeddings.embeddings import EmbeddingComputer
 from src.rag.components.shared.databases.milvus import MilvusDatabase
 from src.rag.schemas.document import MilvusDocument
+from src.shared.logger import setup_logger
+
+logger = setup_logger("retriever_services")
 
 
 @singleton
@@ -16,6 +19,7 @@ class RetrieverServices:
 		# later we can customize this to handle multiple databases.
 		self.milvus_client = milvus_client
 		self.embedding_computer = embedding_computer
+		logger.info("Retriever services initialized.")
 
 	def retrieve(self, query: str, top_k: int = 5) -> List[MilvusDocument]:
 		"""retrieve the top k documents from the database given the query"""

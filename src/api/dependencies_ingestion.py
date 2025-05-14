@@ -6,6 +6,8 @@ from src.rag.components.shared.databases.milvus_settings import MilvusSettings
 
 def create_application_injector() -> Injector:
 	_injector = Injector(auto_bind=True)
+
+	# Need to replace this with the setting from environments
 	COLLECTION_NAME = "my_collection"
 	embedding_model_name = "intfloat/multilingual-e5-large"
 	settings = MilvusSettings(
