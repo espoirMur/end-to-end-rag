@@ -1,12 +1,17 @@
-Remaining Steps: 
+RAG TODOs:
 
-- Write a post on the LLM and summarization
-- Make the summarization 
+- Implement chat on document feature
+- Select document
+- Implement the ingestion to use minio storage as document store. 
+- Save the whole pdf in the document store
 
-- Write the UI
 
-- Write about it and finalize
+# Come back and debug the nodes, why is not returning the right stuff.
 
-- Scheduling
-- Sending Daily news
-- Sending weekly report.
+
+
+## sort out the api return response
+
+
+
+### Need to sort out the doc ingestion and integrate it with private gpt

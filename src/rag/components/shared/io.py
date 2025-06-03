@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from dateutil import parser
-from openparse.schemas import ParsedDocument
 
 from src.rag.schemas.document import Document as CleanedDocument
+from src.rag.schemas.document import Node
 from src.shared.logger import setup_logger
 
 logger = setup_logger("pdf_parser")
@@ -14,9 +14,15 @@ logger = setup_logger("pdf_parser")
 class IOManager:
 	"""class for saving and loading documents"""
 
-	def __init__(self, document_path: str, glob: str = "**/*.json"):
-		self.document_path = Path(document_path)
-		self.all_documents = self.document_path.glob(glob)
+	def __init__(
+		self,
+		input_document_path: Union[Path, str],
+		output_path: Union[Path, str],
+		glob: str = "**/*.json",
+	):
+		self.input_document_path = input_document_path
+		self.output_document_path = output_path
+		self.all_documents = self.input_document_path.glob(glob)
 		self.all_documents = list(self.all_documents)
 
 	@property
@@ -29,23 +35,38 @@ class IOManager:
 		"""
 		return len(self.all_documents)
 
-	def save_parsed_document(self, parsed_document: ParsedDocument):
+	def save_parsed_node(self, node: Node, output_path: Path):
 		"""
-		Save parsed documents to the output path.
-
+		Save a parsed node to the output path.
 		Args:
-		    parsed_document (ParsedDocument): The parsed document to be saved.
+		        node (Node): The node to be saved.
+		        filename (str): The base filename to use for saving.
 		"""
-		if parsed_document is None:
-			logger.warning("Skipping None document")
+		if node is None:
+			logger.warning("Skipping None node")
 			return
+		output_file = output_path.joinpath(
+			f"{node.document.filename}_{node.node_id}.json"
+		)
+		self.write_object_to_file(output_file, node.model_dump_json())
 
-		output_file = self.output_path.joinpath(f"{parsed_document.filename}.json")
-		with open(output_file, "w") as f:
-			f.write(parsed_document.model_dump_json())
-			logger.info(f"Saved parsed document to {output_file}")
+	def write_object_to_file(self, file_path: Path, content):
+		"""
+		Write the given content to the specified file path.
+		Args:
+		    file_path (Path): The path to the file where content will be written.
+		    content: The content to write to the file. Can be a string, dict, or list.
+		"""
+		if isinstance(content, (dict, list)):
+			content_str = json.dumps(content, indent=2)
+		else:
+			content_str = str(content)
+		with open(file_path, "w") as f:
+			f.write(content_str)
+			logger.info(f"Saved content to {file_path}")
 
 	def load_document(self, document_path: Path) -> Optional[CleanedDocument]:
+		"""Todo need to come back to this"""
 		json_string = document_path.read_text()
 		try:
 			doc_dict = json.loads(json_string)
@@ -80,9 +101,9 @@ class IOManager:
 				documents.append(document)
 		return documents
 
-	def save_parsed_documents(
+	def save_parsed_nodes(
 		self,
-		parsed_documents: List[ParsedDocument],
+		parsed_nodes: List[Node],
 		output_folder_name: str = "parsed_documents",
 	):
 		"""
@@ -91,7 +112,7 @@ class IOManager:
 		Args:
 		    parsed_documents (List[ParsedDocument]): The parsed documents to be saved.
 		"""
-		self.output_path = self.document_path.parent.joinpath(output_folder_name)
-		self.output_path.mkdir(parents=True, exist_ok=True)
-		for parsed_document in parsed_documents:
-			self.save_parsed_document(parsed_document)
+		output_path = self.output_document_path.joinpath(output_folder_name)
+		output_path.mkdir(parents=True, exist_ok=True)
+		for node in parsed_nodes:
+			self.save_parsed_node(node, output_path=output_path)

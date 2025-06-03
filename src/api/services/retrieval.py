@@ -1,10 +1,10 @@
-from typing import Dict, List
+from typing import List
 
 from injector import inject, singleton
 
 from src.rag.components.embeddings.embeddings import EmbeddingComputer
 from src.rag.components.shared.databases.milvus import MilvusDatabase
-from src.rag.schemas.document import MilvusDocument
+from src.rag.schemas.document import Node
 from src.shared.logger import setup_logger
 
 logger = setup_logger("retriever_services")
@@ -21,29 +21,26 @@ class RetrieverServices:
 		self.embedding_computer = embedding_computer
 		logger.info("Retriever services initialized.")
 
-	def retrieve(self, query: str, top_k: int = 5) -> List[MilvusDocument]:
+	def search(self, query: str, top_k: int = 5) -> List[Node]:
 		"""retrieve the top k documents from the database given the query"""
-		query_embedding = self.embedding_computer.compute_single_text_embedding(query)
+		query_embedding = self.embedding_computer.compute_single_text_embedding(
+			f"query : {query}"
+		)
 		retrieved_context = self.milvus_client.search(
 			query_vector=query_embedding,
 			top_k=top_k,
-		)
-		post_processed_context = self.post_process_retrieved_context(retrieved_context)
-		return post_processed_context
+		)[0]
+		results = self.post_process_retrieved_context(retrieved_context)
+		return results
 
 	def post_process_retrieved_context(
-		self, retrieved_context: List[Dict]
-	) -> List[MilvusDocument]:
+		self, retrieved_context: List[Node]
+	) -> List[Node]:
 		"""post process the retrieved context and return a list of dictionaries with the text , and metadata"""
-		document = []
-		# 0 because we send only one query
-		for result in retrieved_context[0]:
-			text = result.entity.get("text")
-			distance = result.distance
-			id = result.id
-			metadata = result.entity.get("metadata")
-			milvus_document = MilvusDocument(
-				text=text, distance=distance, id=id, metadata=metadata
-			)
-			document.append(milvus_document)
-		return document
+		responses = []
+
+		for results in retrieved_context:
+			entity = results.entity
+			node = Node.from_milvus_entity(entity)
+			responses.append(node)
+		return responses

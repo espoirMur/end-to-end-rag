@@ -1,0 +1,40 @@
+
+# PyData London 2025 Conference Schedule
+
+Organized by **Time and Date** (rows) and **Room Name** (columns).
+
+## 🗓️ June 6, 2025 — Friday
+
+| Time           | Grand Hall                          | Hardwick Hub                             | Doddington Forum                                      | Library |
+|----------------|-------------------------------------|------------------------------------------|--------------------------------------------------------|---------|
+| 09:00–10:30    | GPU Accelerated Python              | Hands-on with Apache Iceberg             | Bayesian Time Series Analysis with PyMC               |         |
+| 11:00–12:30    |                                     | Package Your Python Code as a CLI        | Forecasting Weather using Time Series ML              |         |
+| 13:30–15:00    | Measuring & Mitigating ML Bias      | Transformers Inside Out (Part 1 & 2)     | Python Meets Quantum                                  |         |
+| 15:30–17:00    | Build Vertical Agent with AG2       | Graph Theory for Multi-Model Integration | Reinforcement Learning in Finance                     |         |
+
+## 🗓️ June 7, 2025 — Saturday
+
+| Time           | Grand Hall                          | Hardwick Hub                             | Doddington Forum                                      | Library                        |
+|----------------|-------------------------------------|------------------------------------------|--------------------------------------------------------|---------------------------------|
+| 09:00–09:55    | Keynote: Leanne Fitzpatrick         |                                          |                                                        |                                 |
+| 10:20–11:05    | Multi-Task Learning for Fraud       | Parallel PyTorch Inference               | Sparse vs Dense Data                                  | PyMC Code Sprint (10:20–12:35) |
+| 11:05–11:50    | AI Agents Testing                   | Sovereign Data for AI                    | Conformal Inference for Time Series                   |                                 |
+| 11:50–12:35    | Streaming + Generative Agents       | Football Analytics (Polars, Keras...)    | LLMs for Fraud Detection                              |                                 |
+| 13:40–14:25    | Keynote: Jay Alammar                |                                          |                                                        |                                 |
+| 14:45–15:30    | Understanding PDFs with AI          | PyScript in Browser                      | Scaling Multi-Agent GenAI                             |                                 |
+| 15:30–16:15    | Real-World LLM Pipelines            | Media Mix Modelling                      | Monzo Feature Engineering                             |                                 |
+| 16:15–17:00    | Rebellion in Data Projects          | LLM Inference Arithmetics                | NetworkX Acceleration                                 |                                 |
+| 17:00–18:00    | Happy Hour                          |                                          |                                                        |                                 |
+
+## 🗓️ June 8, 2025 — Sunday
+
+| Time           | Grand Hall                          | Hardwick Hub                             | Doddington Forum                                      | Library                                |
+|----------------|-------------------------------------|------------------------------------------|--------------------------------------------------------|-----------------------------------------|
+| 09:00–09:45    | Lightning Talks                     |                                          |                                                        |                                         |
+| 10:15–11:00    | Inclusive AI Models                 | DL in Additive Manufacturing             | Transformers for Ranking                              |                                         |
+| 11:00–11:45    | Reproducibility in Embedding Bench. | One Repo to Rule Them All                | Reliable LLMs in Production                           |                                         |
+| 11:45–12:30    | CUDA in Python                      | MedTech Robotics                         | Smart Meter Analysis                                  | Leaders at PyData                      |
+| 13:30–14:15    | Keynote: Tony Mears                 |                                          |                                                        |                                         |
+| 14:45–15:30    | Transformer Model Internals         | Coding to Management                     | Agentic Cyber Defense                                 | Humble Data Workshop                   |
+| 15:30–16:15    | Python PR Reviews                   | Climate Knowledge Graph                  | Coding Assistants Evaluation                          |                                         |
+| 16:15–17:00    | Scaling AI with Ray & Airflow       | Transfer Learning                        | Narwhals + Polars + DuckDB                            |                                         |

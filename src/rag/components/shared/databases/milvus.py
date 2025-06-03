@@ -4,6 +4,7 @@ from injector import inject, singleton
 from pymilvus import DataType, MilvusClient
 
 from src.rag.components.shared.databases.milvus_settings import MilvusSettings
+from src.rag.schemas.document import Node
 from src.shared.logger import setup_logger
 
 logger = setup_logger("milvus_database")
@@ -19,6 +20,7 @@ class MilvusDatabase:
 		self.token = self.settings.token
 		self.vector_dimension = self.settings.vector_dimension
 		self.collection_name = self.settings.collection_name
+		self.embedding_field_name = "embedding"
 
 		self.connect()
 
@@ -44,7 +46,7 @@ class MilvusDatabase:
 			schema = self.create_schema()
 			index_params = self.client.prepare_index_params()
 			index_params.add_index(
-				field_name="embeddings",
+				field_name=self.embedding_field_name,
 				index_type="HNSW",
 				metric_type="COSINE",
 				params={"nlist": 128},
@@ -84,10 +86,13 @@ class MilvusDatabase:
 
 		# Add fields to schema
 		schema.add_field(
-			field_name="id", datatype=DataType.VARCHAR, is_primary=True, max_length=100
+			field_name="node_id",
+			datatype=DataType.VARCHAR,
+			is_primary=True,
+			max_length=100,
 		)
 		schema.add_field(
-			field_name="embeddings",
+			field_name=self.embedding_field_name,
 			datatype=DataType.FLOAT_VECTOR,
 			dim=self.vector_dimension,
 		)
@@ -95,6 +100,22 @@ class MilvusDatabase:
 			field_name="metadata", datatype=DataType.JSON, is_primary=False
 		)
 		schema.add_field(field_name="text", datatype=DataType.VARCHAR, max_length=65530)
+		schema.add_field(
+			field_name="variant",
+			datatype=DataType.ARRAY,
+			max_length=100,
+			element_type=DataType.VARCHAR,
+			max_capacity=10,
+		)
+		schema.add_field(
+			field_name="tokens",
+			datatype=DataType.INT64,
+		)
+		schema.add_field(
+			field_name="bbox",
+			datatype=DataType.JSON,
+		)
+		schema.add_field(field_name="elements", datatype=DataType.JSON)
 
 		return schema
 
@@ -123,8 +144,8 @@ class MilvusDatabase:
 				collection_name=self.collection_name,
 				data=query_vector,
 				limit=top_k,
-				output_fields=["text", "metadata"],
-				params={"metric_type": "L2"},
+				output_fields=Node.keys(),
+				params={"metric_type": "COSINE"},
 			)
 			return results
 		except Exception as e:

@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from injector import Injector
 
 from src.api.routers.retrieval import router as retrieval_router
@@ -17,6 +18,14 @@ def create_app(root_injector: Injector) -> FastAPI:
 		request.state.injector = root_injector
 
 	app = FastAPI(dependencies=[Depends(bind_injector_to_request)])
+
+	app.add_middleware(
+		CORSMiddleware,
+		allow_origins=["*"],
+		allow_credentials=True,
+		allow_methods=["*"],
+		allow_headers=["*"],
+	)
 
 	app.include_router(
 		retrieval_router,
