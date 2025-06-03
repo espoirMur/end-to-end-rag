@@ -2,9 +2,8 @@ import json
 from pathlib import Path
 from typing import List, Optional, Union
 
-from dateutil import parser
+from pydantic_core import ValidationError
 
-from src.rag.schemas.document import Document as CleanedDocument
 from src.rag.schemas.document import Node
 from src.shared.logger import setup_logger
 
@@ -24,6 +23,7 @@ class IOManager:
 		self.output_document_path = output_path
 		self.all_documents = self.input_document_path.glob(glob)
 		self.all_documents = list(self.all_documents)
+		self.failed_documents: List[Path] = []
 
 	@property
 	def number_of_documents(self) -> int:
@@ -65,28 +65,19 @@ class IOManager:
 			f.write(content_str)
 			logger.info(f"Saved content to {file_path}")
 
-	def load_document(self, document_path: Path) -> Optional[CleanedDocument]:
-		"""Todo need to come back to this"""
+	def load_node_from_path(self, document_path: Path) -> Optional[Node]:
+		"""Load a node object form a Json string"""
 		json_string = document_path.read_text()
 		try:
-			doc_dict = json.loads(json_string)
-			for node in doc_dict["nodes"]:
-				node["elements"] = ()
-			doc_dict["last_modified_date"] = parser.parse(
-				doc_dict["last_modified_date"]
-			).date()
-			doc_dict["creation_date"] = parser.parse(doc_dict["creation_date"]).date()
-			doc_dict["last_accessed_date"] = parser.parse(
-				doc_dict["last_accessed_date"]
-			).date()
-			cleaned_document = CleanedDocument(**doc_dict)
-			return cleaned_document
-		except json.JSONDecodeError as e:
-			logger.error(f"Error decoding JSON from {document_path}: {e}")
+			node = Node.model_validate_json(json_string)
+			return node
+		except ValidationError as e:
+			logger.warning(f"Error decoding JSON from {document_path}: {e}")
+			self.failed_documents.append(str(document_path))
 			return None
 
-	def load_documents(self, start_index: int, end_index: int) -> List[CleanedDocument]:
-		"""Load a list of document path and parse them.
+	def load_nodes_document(self, start_index: int, end_index: int) -> List[Node]:
+		"""Load a list of the nodes from the input path
 
 		Args:
 		    start_index (int): The starting index of the documents to load.
@@ -94,12 +85,12 @@ class IOManager:
 		Returns:
 		    List[CleanedDocument]: A list of parsed documents.
 		"""
-		documents = []
+		nodes = []
 		for path in self.all_documents[start_index:end_index]:
-			document = self.load_document(path)
-			if document:
-				documents.append(document)
-		return documents
+			node = self.load_node_from_path(path)
+			if node:
+				nodes.append(node)
+		return nodes
 
 	def save_parsed_nodes(
 		self,

@@ -3,8 +3,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 
-from openparse.schemas import ImageElement, NodeVariant, ParsedDocument
-from pydantic import BaseModel, Field, computed_field
+from openparse.schemas import ImageElement, ParsedDocument
+from pydantic import BaseModel, Field
 
 
 class Document(BaseModel):
@@ -67,10 +67,6 @@ class Node(BaseModel):
 	previous_texts: Optional[List[str]] = None
 	next_texts: Optional[List[str]] = None
 	document: Document
-
-	@computed_field  # type: ignore
-	def images(self) -> List[ImageElement]:
-		return [e for e in self.elements if e.variant == NodeVariant.IMAGE]
 
 	@classmethod
 	def keys(cls):

@@ -14,7 +14,7 @@ if __name__ == "__main__":
 	documents_path = Path.home()
 	books_path = documents_path.joinpath("Documents")
 	file_names = books_path.glob("**/*.pdf")
-	output_path = Path.cwd().joinpath("datasets", "parsed_documents")
+	output_path = Path.cwd().joinpath("datasets")
 	try:
 		output_path.mkdir(parents=True, exist_ok=False)
 	except OSError:
@@ -30,5 +30,5 @@ if __name__ == "__main__":
 	end_time = time.time()
 
 	logger.info(
-		f"Time taken to parse {len(my_parser.io_manager.all_documents)} documents is : {(end_time - start_time)/60} minutes"
+		f"Time taken to parse {my_parser.io_manager.number_of_documents} documents is : {(end_time - start_time)/60} minutes"
 	)
