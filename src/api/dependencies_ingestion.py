@@ -1,7 +1,7 @@
 from injector import Injector
+from rag.components.shared.databases.settings import MilvusSettings
 
 from src.api.schemas import ModelName
-from src.rag.components.shared.databases.milvus_settings import MilvusSettings
 
 
 def create_application_injector() -> Injector:

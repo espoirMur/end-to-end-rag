@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Optional, Union
 
+import aiofiles
 from pydantic_core import ValidationError
 
 from src.rag.schemas.document import Node
@@ -63,7 +64,6 @@ class IOManager:
 			content_str = str(content)
 		with open(file_path, "w") as f:
 			f.write(content_str)
-			logger.info(f"Saved content to {file_path}")
 
 	def load_node_from_path(self, document_path: Path) -> Optional[Node]:
 		"""Load a node object form a Json string"""
@@ -105,5 +105,39 @@ class IOManager:
 		"""
 		output_path = self.output_document_path.joinpath(output_folder_name)
 		output_path.mkdir(parents=True, exist_ok=True)
-		for node in parsed_nodes:
-			self.save_parsed_node(node, output_path=output_path)
+		all_nodes_json = [node.model_dump() for node in parsed_nodes]
+		all_nodes_file = output_path.joinpath(
+			f"{parsed_nodes[0].document.filename}.json"
+		)
+		self.write_object_to_file(all_nodes_file, all_nodes_json)
+
+	async def save_parsed_nodes_async(
+		self,
+		parsed_nodes: List[Node],
+		filename: str,
+	):
+		"""
+		Save parsed documents to the output path asynchronously.
+
+		Args:
+		    parsed_documents (List[ParsedDocument]): The parsed documents to be saved.
+		"""
+		all_nodes_json = [node.model_dump_json() for node in parsed_nodes]
+		all_nodes_file = self.output_document_path.joinpath(f"{filename}.json")
+		async with aiofiles.open(all_nodes_file, "w") as f:
+			await f.write(json.dumps(all_nodes_json, indent=2))
+
+	def save_failed_documents(self, output_path: Path):
+		"""
+		Save the list of failed documents to a file.
+
+		Args:
+		    output_path (Path): The path where the failed documents will be saved.
+		"""
+		if self.failed_documents:
+			self.write_object_to_file(
+				output_path,
+				self.failed_documents,
+			)
+		else:
+			logger.info("No failed documents to save.")

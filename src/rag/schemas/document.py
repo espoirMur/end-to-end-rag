@@ -1,8 +1,11 @@
+import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Iterator, List, Literal, Optional
 
+from docling.datamodel.document import DoclingDocument
+from docling_core.transforms.chunker import BaseChunk
 from openparse.schemas import ImageElement, ParsedDocument
 from pydantic import BaseModel, Field
 
@@ -32,16 +35,25 @@ class Document(BaseModel):
 			metadata.pop(key, None)
 		return metadata
 
-	def convert_to_milvus(self) -> List[Dict[str, Any]]:
-		"""Convert each node in the document to one entity for milvus storage.
-		Add the rest of the document metadata to each node's metadata.
-		"""
-		json_data = self.model_dump(mode="json")
-		nodes = json_data.pop("nodes", None)
-		for node in nodes:
-			node["metadata"] = json_data.copy()
-			node["text"] = f"passage: {node['text']}"
-		return nodes
+	@staticmethod
+	def from_docling_document(doc: DoclingDocument, document_path: Path) -> "Document":
+		"""Create a Document instance from a Docling ParsedDocument."""
+		document_stats = document_path.stat()
+		return Document(
+			file_path=str(document_path),
+			filename=document_path.name,
+			num_pages=doc.num_pages(),
+			coordinate_system="BOTTOM-LEFT",
+			table_parsing_kwargs=None,
+			last_modified_date=datetime.fromtimestamp(
+				document_stats.st_mtime
+			).isoformat(),
+			last_accessed_date=datetime.fromtimestamp(
+				document_stats.st_atime
+			).isoformat(),
+			creation_date=datetime.fromtimestamp(document_stats.st_ctime).isoformat(),
+			file_size=document_stats.st_size,
+		)
 
 
 class BoundingBox(BaseModel):
@@ -55,13 +67,15 @@ class BoundingBox(BaseModel):
 
 
 class Node(BaseModel):
+	"""Unit of a text document , which can be a chunk of tex, an image or a table."""
+
 	embedding: Optional[List[float]] = None
 	node_id: str
 	variant: List[str]
 	tokens: int
 	bbox: List[BoundingBox]
 	text: str
-	elements: tuple
+	elements: Optional[tuple] = None
 	object: Literal["context.chunk"] = "context.chunk"
 	score: float = 0.0
 	previous_texts: Optional[List[str]] = None
@@ -159,4 +173,61 @@ class Node(BaseModel):
 				next_texts=next_texts,
 			)
 			nodes.append(nodes_to_add)
+		return nodes
+
+	def to_milvus_entity(self) -> Dict[str, Any]:
+		"""Convert the Node instance to a dictionary suitable for Milvus."""
+		return {
+			"node_id": self.node_id,
+			"embeddings": self.embedding,  # it is embeddings
+			"variant": self.variant,
+			"tokens": self.tokens,
+			"bbox": json.dumps([bbox.model_dump() for bbox in self.bbox]),
+			"text": self.text,
+			"object": self.object,
+			"score": self.score,
+			"previous_texts": self.previous_texts,
+			"next_texts": self.next_texts,
+			"document": self.document.model_dump_json(),
+			"metadata": {"test": "this should not contain metadata"},
+		}
+
+	@staticmethod
+	def docling_chunk_to_node(
+		chunker, chunks: Iterator[BaseChunk], document: Document
+	) -> List["Node"]:
+		"""Convert a Docling chunk to a Node."""
+		nodes = []
+		for index, chunk in enumerate(chunks):
+			previous_texts = [nodes[index - 1].text] if index > 0 else None
+			next_texts = [nodes[index + 1].text] if index < len(nodes) - 1 else None
+			bounding_box = chunk.meta.doc_items[0].prov[0].model_dump()
+			bbox = [
+				BoundingBox(
+					page=bounding_box.get("page", 0),
+					x0=bounding_box.get("bbox").get("l"),
+					y0=bounding_box.get("bbox").get("t"),
+					x1=bounding_box.get("bbox").get("r"),
+					y1=bounding_box.get("bbox").get("b"),
+					page_height=bounding_box.get("page_height", 0.0),
+					page_width=bounding_box.get("page_width", 0.0),
+				)
+			]
+			enriched_text = chunker.contextualize(chunk)
+			previous_texts = [nodes[-1].text] if nodes else None
+			next_texts = [chunk.text] if chunk else None
+
+			node = Node(
+				node_id=str(uuid.uuid4()),
+				variant=["TEXT"],
+				tokens=0,
+				bbox=bbox,
+				text=enriched_text,
+				elements=None,
+				metadata={},
+				document=document,
+				previous_texts=previous_texts,
+				next_texts=next_texts,
+			)
+			nodes.append(node)
 		return nodes

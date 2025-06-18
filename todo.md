@@ -15,3 +15,10 @@ RAG TODOs:
 
 
 ### Need to sort out the doc ingestion and integrate it with private gpt
+
+### Giving up on making it work with llama index, too many bugs to convert the document to llama index
+
+
+https://github.com/Emissary-Tech/legit-rag
+
+Will give it a try
