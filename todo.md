@@ -22,3 +22,14 @@ RAG TODOs:
 https://github.com/Emissary-Tech/legit-rag
 
 Will give it a try
+
+
+
+### TODO: 
+
+Yes my search for library I found a better integration of PG vector... 
+
+https://github.com/tensorchord/vechord?tab=readme-ov-file
+
+I will need to do it now for the pgvector and pgasynch
+Need to come back and build the pgvector store.
