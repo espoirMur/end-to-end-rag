@@ -49,6 +49,7 @@ class EmbeddingComputer:
 	) -> List[Node]:
 		"""Process nodes in batches and compute embeddings. Return a list of nodes with embeddings."""
 		all_embeddings = []
+		print(f"I am dealing with {len(all_nodes)} nodes")
 		for i in range(0, len(all_nodes), batch_size):
 			batch_nodes = all_nodes[i : i + batch_size]
 			texts = self.collect_node_text(batch_nodes)

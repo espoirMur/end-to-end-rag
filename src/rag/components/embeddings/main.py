@@ -17,7 +17,10 @@ def main(
 	limit: int,
 ):
 	input_path = Path(input_path)
+	input_path = Path.cwd().joinpath("datasets", input_path)
 	output_path = Path(output_path)
+
+	output_path.mkdir(parents=True, exist_ok=True)
 	io_manager = IOManager(input_document_path=input_path, output_path=output_path)
 	embedding_computer = EmbeddingComputer(model_name=embedding_model_name)
 	# save the starttime here
@@ -27,6 +30,9 @@ def main(
 		doc_to_process = io_manager.all_documents[:limit]
 	else:
 		doc_to_process = io_manager.all_documents
+	logger.info(
+		f"Number of documents to process: {len(doc_to_process)} from {input_path}"
+	)
 	for i in range(0, len(doc_to_process), batch_size):
 		logger.info(f"Processing documents from index {i} to {i + batch_size}")
 		nodes = io_manager.load_nodes_document(i, i + batch_size)
@@ -43,6 +49,9 @@ def main(
 	io_manager.write_object_to_file(
 		output_path.joinpath("failed_document_list.txt"), io_manager.failed_documents
 	)
+	logger.info(
+		f"done saving the document with embeddings to the output path {io_manager.output_document_path}"
+	)
 
 
 if __name__ == "__main__":
@@ -58,13 +67,13 @@ if __name__ == "__main__":
 	parser.add_argument(
 		"--input_path",
 		type=str,
-		default=Path.cwd().joinpath("datasets", "parsed_documents/parsed_documents"),
+		default="parsed_documents/parsed_documents",
 		help="Path to the input documents.",
 	)
 	parser.add_argument(
 		"--output_path",
 		type=str,
-		default=Path.home().joinpath("datasets", "parsed_documents_with_embeddings"),
+		default=Path.cwd().joinpath("datasets", "parsed_documents_with_embeddings"),
 		help="Path to save the documents with embeddings.",
 	)
 	parser.add_argument(

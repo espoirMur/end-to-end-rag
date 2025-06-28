@@ -7,10 +7,12 @@ from typing import Any, Dict, Iterator, List, Literal, Optional
 from docling.datamodel.document import DoclingDocument
 from docling_core.transforms.chunker import BaseChunk
 from openparse.schemas import ImageElement, ParsedDocument
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Document(BaseModel):
+	# make sure the datetime is serialized to ISO format
+	model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 	doc_id: str = Field(
 		default_factory=lambda: str(uuid.uuid4()),
 		description="Unique ID of the node.",

@@ -33,3 +33,16 @@ https://github.com/tensorchord/vechord?tab=readme-ov-file
 
 I will need to do it now for the pgvector and pgasynch
 Need to come back and build the pgvector store.
+
+
+--- Need to come to the embedding stuff.
+
+
+## Todo as 28 June
+
+Now the embedding is working come back and load the data in the postgres database.
+
+
+Work on the evaluation and decide if the model was right. And analyze the results.
+
+Come back to the UI with the first version of the software

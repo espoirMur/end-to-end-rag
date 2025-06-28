@@ -50,13 +50,14 @@ class IOManager:
 			f"{node.document.filename}_{node.node_id}.json"
 		)
 		self.write_object_to_file(output_file, node.model_dump_json())
+		logger.info(f"Saved node {node.node_id} to {output_file}")
 
-	def write_object_to_file(self, file_path: Path, content):
+	def write_object_to_file(self, file_path: Path, content: Union[dict, list, str]):
 		"""
 		Write the given content to the specified file path.
 		Args:
 		    file_path (Path): The path to the file where content will be written.
-		    content: The content to write to the file. Can be a string, dict, or list.
+		    content (Union[dict, list, str]): The content to write to the file.
 		"""
 		if isinstance(content, (dict, list)):
 			content_str = json.dumps(content, indent=2)
@@ -65,14 +66,38 @@ class IOManager:
 		with open(file_path, "w") as f:
 			f.write(content_str)
 
-	def load_node_from_path(self, document_path: Path) -> Optional[Node]:
-		"""Load a node object form a Json string"""
-		json_string = document_path.read_text()
+	def load_nodes_from_path(self, document_path: Path) -> Optional[List[Node]]:
+		"""Load nodes from a json file containing an array of JSON objects."""
 		try:
-			node = Node.model_validate_json(json_string)
-			return node
-		except ValidationError as e:
+			with open(document_path, "r") as file:
+				data = json.load(file)  # Load the entire JSON array
+
+				if not isinstance(data, list):
+					logger.warning(
+						f"Expected JSON array in {document_path}, got {type(data)}"
+					)
+					self.failed_documents.append(str(document_path))
+					return None
+
+				nodes = []
+				for item_string in data:
+					try:
+						item: dict = json.loads(item_string)
+						node = Node.model_validate(item)
+						nodes.append(node)
+					except ValidationError as e:
+						logger.warning(f"Error validating node in {document_path}: {e}")
+						self.failed_documents.append(str(document_path))
+						continue
+
+				return nodes
+
+		except json.JSONDecodeError as e:
 			logger.warning(f"Error decoding JSON from {document_path}: {e}")
+			self.failed_documents.append(str(document_path))
+			return None
+		except Exception as e:
+			logger.warning(f"Unexpected error reading {document_path}: {e}")
 			self.failed_documents.append(str(document_path))
 			return None
 
@@ -85,12 +110,12 @@ class IOManager:
 		Returns:
 		    List[CleanedDocument]: A list of parsed documents.
 		"""
-		nodes = []
+		all_nodes = []
 		for path in self.all_documents[start_index:end_index]:
-			node = self.load_node_from_path(path)
-			if node:
-				nodes.append(node)
-		return nodes
+			nodes = self.load_nodes_from_path(path)
+			if nodes:
+				all_nodes.extend(nodes)
+		return all_nodes
 
 	def save_parsed_nodes(
 		self,
@@ -105,7 +130,7 @@ class IOManager:
 		"""
 		output_path = self.output_document_path.joinpath(output_folder_name)
 		output_path.mkdir(parents=True, exist_ok=True)
-		all_nodes_json = [node.model_dump() for node in parsed_nodes]
+		all_nodes_json = [node.model_dump_json() for node in parsed_nodes]
 		all_nodes_file = output_path.joinpath(
 			f"{parsed_nodes[0].document.filename}.json"
 		)
