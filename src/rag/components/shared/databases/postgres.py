@@ -9,6 +9,10 @@ from pgvector.psycopg import register_vector
 from psycopg import Connection, sql
 from psycopg.pq import TransactionStatus
 
+from src.shared.logger import setup_logger
+
+logger = setup_logger("postgres database client")
+
 # Type variables for better type hints
 T = TypeVar("T")
 Vector = np.ndarray
@@ -23,7 +27,7 @@ class DistanceMetric(str, Enum):
 	INNER_PRODUCT = "inner"
 
 
-class VectorDBClient:
+class PostgresVectorDBClient:
 	"""An improved PostgreSQL client with vector search capabilities."""
 
 	def __init__(
@@ -54,8 +58,6 @@ class VectorDBClient:
 		"""Initialize required PostgreSQL extensions."""
 		with self._transaction() as cursor:
 			cursor.execute("CREATE EXTENSION IF NOT EXISTS vchord CASCADE")
-			cursor.execute("CREATE EXTENSION IF NOT EXISTS vchord_bm25")
-			cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_tokenizer")
 			cursor.execute(
 				sql.SQL("SET search_path TO {}").format(
 					sql.SQL(", ").join(map(sql.Identifier, search_path))
@@ -76,9 +78,7 @@ class VectorDBClient:
 		"""Get the fully qualified table name with namespace."""
 		return sql.Identifier(f"{self.namespace}_{name}")
 
-	def create_table(
-		self, name: str, schema: Sequence[Tuple[str, str]], if_not_exists: bool = True
-	) -> None:
+	def create_table(self, name: str, schema: Dict, if_not_exists: bool = True) -> None:
 		"""
 		Create a table with the specified schema.
 
@@ -88,11 +88,11 @@ class VectorDBClient:
 		    if_not_exists: Whether to add IF NOT EXISTS clause
 		"""
 		columns = sql.SQL(", ").join(
-			sql.SQL("{col} {typ}").format(
-				col=sql.Identifier(col),
-				typ=sql.SQL(typ),
+			sql.SQL("{column} {data_type}").format(
+				column=sql.Identifier(column),
+				data_type=sql.SQL(data_type),
 			)
-			for col, typ in schema
+			for column, data_type in schema.items()
 		)
 
 		query = sql.SQL("CREATE TABLE {if_not_exists} {table} ({columns})").format(
@@ -103,6 +103,7 @@ class VectorDBClient:
 
 		with self._transaction() as cursor:
 			cursor.execute(query)
+			logger.info(f"Table {name} created with schema: {schema}")
 
 	def create_index(
 		self,
@@ -175,6 +176,53 @@ class VectorDBClient:
 			cursor.execute(query, list(data.values()))
 			return cursor.fetchall() if returning else None
 
+	def find_by_id_or_create(
+		self, table_name: str, data: Dict[str, Any], id_field: str
+	) -> Tuple[bool, Optional[List[Tuple[Any, ...]]]]:
+		"""
+		Find a record by primary key or create it if not found.
+
+		Args:
+		    table_name: Name of the table
+		    data: Dictionary of column names and values
+
+		Returns:
+		    Tuple of (created, returned_rows)
+		    created: True if a new record was created, False if found
+		    returned_rows: Rows returned from the database
+		"""
+		columns = list(data.keys())
+		values = list(data.values())
+
+		# Check if the record exists
+		find_query = sql.SQL(
+			"SELECT * FROM {table} WHERE {id_field} = {id_value}"
+		).format(
+			table=self._full_table_name(table_name),
+			id_field=sql.Identifier(id_field),
+			id_value=sql.Placeholder(),  # Use the value from data
+		)
+		logger.info(f"Executing query: {find_query.as_string(self.connection)}")
+
+		with self._transaction() as cursor:
+			cursor.execute(find_query, [data.get(id_field, None)])
+			rows = cursor.fetchall()
+
+			if rows:
+				return False, rows
+			else:
+				# Record not found, insert it
+				insert_query = sql.SQL(
+					"INSERT INTO {table} ({columns}) VALUES ({values})"
+				).format(
+					table=self._full_table_name(table_name),
+					columns=sql.SQL(", ").join(map(sql.Identifier, columns)),
+					values=sql.SQL(", ").join(sql.Placeholder() * len(values)),
+				)
+				print(f"The insert query is: {insert_query.as_string(self.connection)}")
+				cursor.execute(insert_query, values)
+				return True, None
+
 	def bulk_insert(
 		self,
 		table_name: str,
@@ -198,7 +246,7 @@ class VectorDBClient:
 		columns = list(data[0].keys())
 		values = [tuple(item[col] for col in columns) for item in data]
 
-		query = sql.SQL("INSERT INTO {table} ({columns}) VALUES %s").format(
+		query = sql.SQL("INSERT INTO {table} ({columns})").format(
 			table=self._full_table_name(table_name),
 			columns=sql.SQL(", ").join(map(sql.Identifier, columns)),
 		)
@@ -225,13 +273,17 @@ class VectorDBClient:
 					result.extend(cursor.fetchall())
 				return result
 			else:
+				formatted_query = sql.SQL(
+					"{query}  values ({placeholders})  ON CONFLICT DO NOTHING"
+				).format(
+					query=query,
+					placeholders=sql.SQL(", ").join(sql.Placeholder() * len(columns)),
+				)
+				logger.info(
+					f"Executing bulk insert query: {formatted_query.as_string(self.connection)}"
+				)
 				cursor.executemany(
-					sql.SQL("{query} ({placeholders})").format(
-						query=query,
-						placeholders=sql.SQL(", ").join(
-							sql.Placeholder() * len(columns)
-						),
-					),
+					formatted_query,
 					values,
 				)
 				return None
@@ -359,3 +411,40 @@ class VectorDBClient:
 			dict_reader = csv.DictReader(csvfile)
 			headers = dict_reader.fieldnames
 			return list(headers)
+
+	def add_foreign_key_to_table(
+		self,
+		table_name: str,
+		column_name: str,
+		foreign_table: str,
+		foreign_column: str,
+		if_not_exists: bool = True,
+	) -> None:
+		"""
+		Add a foreign key constraint to a table.
+
+		Args:
+		    table_name: Name of the table to modify
+		    column_name: Column to add the foreign key to
+		    foreign_table: Referenced table
+		    foreign_column: Referenced column in the foreign table
+		    if_not_exists: Whether to add IF NOT EXISTS clause
+		"""
+		query = sql.SQL(
+			"ALTER TABLE {table} ADD CONSTRAINT {constraint} "
+			"FOREIGN KEY ({column}) REFERENCES {foreign_table}({foreign_column})"
+		).format(
+			table=self._full_table_name(table_name),
+			constraint=sql.Identifier(
+				f"{self.namespace}_{table_name}_{column_name}_fk"
+			),
+			column=sql.Identifier(column_name),
+			foreign_table=sql.Identifier(foreign_table),
+			foreign_column=sql.Identifier(foreign_column),
+		)
+
+		if if_not_exists:
+			query = sql.SQL("ALTER TABLE IF NOT EXISTS {query}").format(query=query)
+
+		with self._transaction() as cursor:
+			cursor.execute(query)

@@ -33,9 +33,26 @@ class Document(BaseModel):
 	@staticmethod
 	def curate_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
 		"""Remove unwanted metadata keys."""
-		for key in ["doc_id", "window", "original_text"]:
+		for key in ["window", "original_text"]:
 			metadata.pop(key, None)
 		return metadata
+
+	@staticmethod
+	def to_sql_schema() -> Dict[str, str]:
+		return {
+			"doc_id": "TEXT PRIMARY KEY",
+			"file_path": "TEXT",
+			"filename": "TEXT",
+			"num_pages": "INTEGER",
+			"coordinate_system": "TEXT",
+			"table_parsing_kwargs": "JSON",
+			"last_modified_date": "TIMESTAMPTZ",
+			"last_accessed_date": "TIMESTAMPTZ",
+			"creation_date": "TIMESTAMPTZ",
+			"file_size": "INTEGER",
+			"object": "TEXT",
+			"doc_metadata": "JSON",
+		}
 
 	@staticmethod
 	def from_docling_document(doc: DoclingDocument, document_path: Path) -> "Document":
@@ -104,6 +121,41 @@ class Node(BaseModel):
 			elements=elements,
 			metadata=entity.get("metadata"),
 		)
+
+	@staticmethod
+	def to_sql_schema(embedding_dimension: int, table_prefix: str) -> Dict[str, str]:
+		return {
+			"node_id": "TEXT PRIMARY KEY",
+			"variant": "JSON",
+			"tokens": "INTEGER",
+			"bbox": "JSON",
+			"text": "TEXT",
+			"elements": "JSON",
+			"object": "TEXT",
+			"score": "REAL",
+			"previous_texts": "JSON",
+			"next_texts": "JSON",
+			"document_id": "TEXT",  # will add the foregein key later
+			"embedding": f"vector({embedding_dimension})",
+			# Add other fields as needed
+		}
+
+	def to_sql_insert(self, table_prefix: str) -> Dict[str, Any]:
+		"""Convert the Node instance to a dictionary for SQL insertion."""
+		return {
+			"node_id": self.node_id,
+			"variant": json.dumps(self.variant),
+			"tokens": self.tokens,
+			"bbox": json.dumps([bbox.model_dump() for bbox in self.bbox]),
+			"text": self.text,
+			"elements": json.dumps([el.model_dump() for el in self.elements or []]),
+			"object": self.object,
+			"score": self.score,
+			"previous_texts": json.dumps(self.previous_texts or []),
+			"next_texts": json.dumps(self.next_texts or []),
+			"document_id": self.document.doc_id,
+			"embedding": self.embedding,  # it is embeddings
+		}
 
 	@classmethod
 	def from_node_with_score(cls, node_with_score) -> "Node":

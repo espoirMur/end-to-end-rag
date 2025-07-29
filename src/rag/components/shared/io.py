@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from typing import List, Optional, Union
+from uuid import uuid4
 
 import aiofiles
 from pydantic_core import ValidationError
@@ -129,12 +130,13 @@ class IOManager:
 		    parsed_documents (List[ParsedDocument]): The parsed documents to be saved.
 		"""
 		output_path = self.output_document_path.joinpath(output_folder_name)
-		output_path.mkdir(parents=True, exist_ok=True)
+		file_id = str(uuid4())[:8]  # Generate a short unique ID for the file
 		all_nodes_json = [node.model_dump_json() for node in parsed_nodes]
 		all_nodes_file = output_path.joinpath(
-			f"{parsed_nodes[0].document.filename}.json"
+			f"{parsed_nodes[0].document.filename}_{file_id}.json"
 		)
 		self.write_object_to_file(all_nodes_file, all_nodes_json)
+		logger.info(f"Saved {len(parsed_nodes)} nodes to {all_nodes_file}")
 
 	async def save_parsed_nodes_async(
 		self,
@@ -151,6 +153,7 @@ class IOManager:
 		all_nodes_file = self.output_document_path.joinpath(f"{filename}.json")
 		async with aiofiles.open(all_nodes_file, "w") as f:
 			await f.write(json.dumps(all_nodes_json, indent=2))
+		logger.info(f"Saved {len(parsed_nodes)} nodes to {all_nodes_file}")
 
 	def save_failed_documents(self, output_path: Path):
 		"""
