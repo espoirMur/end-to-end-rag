@@ -1,0 +1,12 @@
+
+
+services:
+    vchord-demo:
+        image: tensorchord/vchord-postgres:pg17-v0.4.3
+        container_name: vchord-demo
+        environment:
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        ports:
+            - "5434:5432"
+        volumes:
+            - ./pgdata:/var/lib/postgresql/data
