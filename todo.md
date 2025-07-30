@@ -46,3 +46,14 @@ Now the embedding is working come back and load the data in the postgres databas
 Work on the evaluation and decide if the model was right. And analyze the results.
 
 Come back to the UI with the first version of the software
+
+
+## Todo 30 July..
+
+What should I do today, I am done with the postgres ingestion.
+
+Should I continue with the application or do the evaluation?
+
+Honestly I don't know.. 
+
+But let us make something working and then we wil ldo the evaluation
