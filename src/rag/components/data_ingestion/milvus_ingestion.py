@@ -2,6 +2,7 @@
 import argparse
 from pathlib import Path
 
+from rag.components.shared.databases.settings import MilvusSettings
 from src.rag.components.shared.databases.milvus import MilvusDatabase
 from src.rag.components.shared.io import IOManager
 from src.shared.logger import setup_logger
@@ -25,7 +26,7 @@ if __name__ == "__main__":
 	parser.add_argument(
 		"--document_path",
 		type=str,
-		default="parsed_documents_with_embeddings",
+		default=Path.home().joinpath("datasets", "parsed_documents_with_embeddings"),
 		help="Path to the documents to be processed.",
 	)
 	parser.add_argument(
@@ -49,34 +50,38 @@ if __name__ == "__main__":
 	)
 	args = parser.parse_args()
 
-	output_path = Path.cwd().joinpath("datasets", args.document_path)
-	io_manager = IOManager(output_path)
+	input_path = Path(args.document_path)
+	# the output path is the same as the input path, as we are not saving any new files
+	output_path = Path(args.document_path)
+	io_manager = IOManager(input_document_path=input_path, output_path=output_path)
 
 	assert (
-		io_manager.document_path.exists()
-	), f"Document path {io_manager.document_path} does not exist."
-
-	milvus_client = MilvusDatabase(
-		host=args.host,
-		token=None,
-		vector_dimension=1024,
+		io_manager.input_document_path.exists()
+	), f"Document path {io_manager.input_document_path} does not exist."
+	settings = MilvusSettings(
+		uri=args.host,
 		collection_name=args.collection_name,
+		vector_dimension=1024,
 	)
+	milvus_client = MilvusDatabase(milvus_settings=settings)
 	milvus_client.create_index_if_not_exists()
 	document_to_process = (
 		args.number_of_documents
 		if args.number_of_documents
 		else io_manager.number_of_documents
 	)
+	logger.info(
+		f"Processing {document_to_process} documents in chunks of size {args.chunk_size}"
+	)
 	for i in range(0, document_to_process, args.chunk_size):
 		logger.info(f"Processing documents from index {i} to {i + args.chunk_size}")
-		documents = io_manager.load_documents(i, i + args.chunk_size)
-		doc_to_writes = []
-		for document in documents:
-			document_modes = document.convert_to_milvus()
-			doc_to_writes.extend(document_modes)
+		nodes = io_manager.load_nodes_document(i, i + args.chunk_size)
+		nodes_to_write = []
+		for node in nodes:
+			node_json = node.to_milvus_entity()
+			nodes_to_write.append(node_json)
 		try:
-			milvus_client.write_data(doc_to_writes)
+			milvus_client.write_data(nodes_to_write)
 			logger.info(
 				f"Finished processing documents from index {i} to {i + args.chunk_size}"
 			)

@@ -2,8 +2,10 @@ from typing import Dict, List
 
 from injector import inject, singleton
 from pymilvus import DataType, MilvusClient
+from pymilvus.orm.collection import CollectionSchema
 
-from src.rag.components.shared.databases.milvus_settings import MilvusSettings
+from rag.components.shared.databases.settings import MilvusSettings
+from src.rag.schemas.document import Node
 from src.shared.logger import setup_logger
 
 logger = setup_logger("milvus_database")
@@ -19,6 +21,7 @@ class MilvusDatabase:
 		self.token = self.settings.token
 		self.vector_dimension = self.settings.vector_dimension
 		self.collection_name = self.settings.collection_name
+		self.embedding_field_name = "embeddings"
 
 		self.connect()
 
@@ -44,7 +47,7 @@ class MilvusDatabase:
 			schema = self.create_schema()
 			index_params = self.client.prepare_index_params()
 			index_params.add_index(
-				field_name="embeddings",
+				field_name=self.embedding_field_name,
 				index_type="HNSW",
 				metric_type="COSINE",
 				params={"nlist": 128},
@@ -75,27 +78,9 @@ class MilvusDatabase:
 
 		logger.info("Completed writing embeddings to Milvus.")
 
-	def create_schema(self):
+	def create_schema(self) -> CollectionSchema:
 		"""Create a milvus Schemas"""
-		schema = self.client.create_schema(
-			auto_id=False,
-			enable_dynamic_field=True,
-		)
-
-		# Add fields to schema
-		schema.add_field(
-			field_name="id", datatype=DataType.VARCHAR, is_primary=True, max_length=100
-		)
-		schema.add_field(
-			field_name="embeddings",
-			datatype=DataType.FLOAT_VECTOR,
-			dim=self.vector_dimension,
-		)
-		schema.add_field(
-			field_name="metadata", datatype=DataType.JSON, is_primary=False
-		)
-		schema.add_field(field_name="text", datatype=DataType.VARCHAR, max_length=65530)
-
+		schema = Node.to_milvus_schema(self.client)
 		return schema
 
 	def delete_collection(self):
@@ -123,10 +108,66 @@ class MilvusDatabase:
 				collection_name=self.collection_name,
 				data=query_vector,
 				limit=top_k,
-				output_fields=["text", "metadata"],
-				params={"metric_type": "L2"},
+				output_fields=Node.keys(),
+				params={"metric_type": "COSINE"},
 			)
 			return results
 		except Exception as e:
 			logger.error(f"Failed to search in Milvus: {str(e)}")
 			return []
+
+	def to_milvus_schema(self) -> CollectionSchema:
+		"""Create a milvus schemas for the node class."""
+		schema = self.milvus_client.create_schema(
+			auto_id=False,
+			enable_dynamic_field=True,
+		)
+
+		# Add fields to schema
+		schema.add_field(
+			field_name="node_id",
+			datatype=DataType.VARCHAR,
+			is_primary=True,
+			max_length=100,
+		)
+		schema.add_field(
+			field_name="embeddings",
+			datatype=DataType.FLOAT_VECTOR,
+			dim=1024,  # addjust according to your embedding dimension
+		)
+		schema.add_field(
+			field_name="variant",
+			datatype=DataType.ARRAY,
+			max_length=100,
+			element_type=DataType.VARCHAR,
+			max_capacity=2,
+		)
+		schema.add_field(
+			field_name="tokens",
+			datatype=DataType.INT64,
+		)
+		schema.add_field(field_name="bbox", datatype=DataType.JSON)
+		schema.add_field(
+			field_name="text",
+			datatype=DataType.VARCHAR,
+			max_length=65530,
+		)
+		schema.add_field(
+			field_name="object",
+			datatype=DataType.VARCHAR,
+			max_length=50,
+		)
+		schema.add_field(
+			field_name="score",
+			datatype=DataType.FLOAT,
+		)
+		schema.add_field(
+			field_name="previous_texts",
+			datatype=DataType.JSON,
+			nullable=True,
+		)
+		schema.add_field(field_name="next_texts", datatype=DataType.JSON, nullable=True)
+		schema.add_field(field_name="document", datatype=DataType.JSON)
+		# Optionally, add metadata if needed
+		schema.add_field(field_name="metadata", datatype=DataType.JSON, nullable=False)
+		return schema
