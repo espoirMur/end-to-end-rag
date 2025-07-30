@@ -16,7 +16,7 @@ class Document(BaseModel):
 	doc_id: str = Field(
 		default_factory=lambda: str(uuid.uuid4()),
 		description="Unique ID of the node.",
-		exclude=True,
+		exclude=False,
 	)
 	file_path: str
 	filename: Optional[str] = (None,)

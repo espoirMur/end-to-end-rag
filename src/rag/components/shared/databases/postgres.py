@@ -124,19 +124,17 @@ class PostgresVectorDBClient:
 		    if_not_exists: Whether to add IF NOT EXISTS clause
 		"""
 		query = sql.SQL(
-			"CREATE {unique} INDEX {if_not_exists} {index_name} ON {table} "
-			"({column}) {config}"
+			"CREATE INDEX {if_not_exists} {index_name} ON {table} "
+			" {config} ({column} vector_l2_ops)"
 		).format(
-			unique=sql.SQL("UNIQUE") if unique else sql.SQL(""),
 			if_not_exists=sql.SQL("IF NOT EXISTS") if if_not_exists else sql.SQL(""),
 			index_name=sql.Identifier(
-				f"{self.namespace}_{table_name}_{column_name}_idx"
+				f"{self.namespace}_{table_name}_{column_name}_index"
 			),
 			table=self._full_table_name(table_name),
 			column=sql.Identifier(column_name),
 			config=sql.SQL(index_config),
 		)
-
 		with self._transaction() as cursor:
 			cursor.execute(query)
 
@@ -251,21 +249,20 @@ class PostgresVectorDBClient:
 			columns=sql.SQL(", ").join(map(sql.Identifier, columns)),
 		)
 
-		if returning:
-			query = sql.SQL("{query} RETURNING {returning}").format(
-				query=query,
-				returning=sql.SQL(", ").join(map(sql.Identifier, returning)),
-			)
-
 		with self._transaction() as cursor:
 			if returning:
 				result = []
 				for value in values:
 					cursor.execute(
-						sql.SQL("{query} VALUES ({placeholders})").format(
+						sql.SQL(
+							"{query} VALUES ({placeholders}) ON CONFLICT DO NOTHING RETURNING {returning}"
+						).format(
 							query=query,
 							placeholders=sql.SQL(", ").join(
 								sql.Placeholder() * len(value)
+							),
+							returning=sql.SQL(", ").join(
+								map(sql.Identifier, returning)
 							),
 						),
 						value,
@@ -436,10 +433,10 @@ class PostgresVectorDBClient:
 		).format(
 			table=self._full_table_name(table_name),
 			constraint=sql.Identifier(
-				f"{self.namespace}_{table_name}_{column_name}_fk"
+				f"{self.namespace}_{table_name}_{column_name}_foreign_key"
 			),
 			column=sql.Identifier(column_name),
-			foreign_table=sql.Identifier(foreign_table),
+			foreign_table=self._full_table_name(foreign_table),
 			foreign_column=sql.Identifier(foreign_column),
 		)
 
@@ -448,3 +445,43 @@ class PostgresVectorDBClient:
 
 		with self._transaction() as cursor:
 			cursor.execute(query)
+
+	def create_database(self, database_name: str, if_not_exists: bool = True) -> None:
+		"""
+		Create a database if it does not exist.
+
+		Args:
+		    database_name: Name of the database to create
+		    if_not_exists: Whether to add IF NOT EXISTS clause
+		"""
+		query = sql.SQL("CREATE DATABASE {if_not_exists} {database}").format(
+			if_not_exists=sql.SQL("IF NOT EXISTS") if if_not_exists else sql.SQL(""),
+			database=sql.Identifier(database_name),
+		)
+
+		with self._transaction() as cursor:
+			cursor.execute(query)
+			logger.info(f"Database '{database_name}' created or already exists.")
+
+	def drop_constraint(
+		self, table_name: str, constraint_name: str, if_exists: bool = True
+	) -> None:
+		"""
+		Drop a constraint from a table.
+
+		Args:
+		    table_name: Name of the table
+		    constraint_name: Name of the constraint to drop
+		    if_exists: Whether to add IF EXISTS clause
+		"""
+		query = sql.SQL(
+			"ALTER TABLE {table} DROP CONSTRAINT {if_exists} {constraint}"
+		).format(
+			table=self._full_table_name(table_name),
+			if_exists=sql.SQL("IF EXISTS") if if_exists else sql.SQL(""),
+			constraint=sql.Identifier(constraint_name),
+		)
+
+		with self._transaction() as cursor:
+			cursor.execute(query)
+			logger.info(f"Constraint '{constraint_name}' dropped from '{table_name}'.")

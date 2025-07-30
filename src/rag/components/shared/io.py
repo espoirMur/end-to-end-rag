@@ -9,7 +9,7 @@ from pydantic_core import ValidationError
 from src.rag.schemas.document import Node
 from src.shared.logger import setup_logger
 
-logger = setup_logger("pdf_parser")
+logger = setup_logger("io manager")
 
 
 class IOManager:
@@ -26,6 +26,13 @@ class IOManager:
 		self.all_documents = self.input_document_path.glob(glob)
 		self.all_documents = list(self.all_documents)
 		self.failed_documents: List[Path] = []
+		self.input_document_path = Path(self.input_document_path)
+		self.output_document_path = Path(self.output_document_path)
+		if not self.input_document_path.exists():
+			raise FileNotFoundError(
+				f"Input path {self.input_document_path} does not exist."
+			)
+		self.output_document_path.mkdir(parents=True, exist_ok=True)
 
 	@property
 	def number_of_documents(self) -> int:
@@ -64,8 +71,7 @@ class IOManager:
 			content_str = json.dumps(content, indent=2)
 		else:
 			content_str = str(content)
-		with open(file_path, "w") as f:
-			f.write(content_str)
+		file_path.write_text(content_str)
 
 	def load_nodes_from_path(self, document_path: Path) -> Optional[List[Node]]:
 		"""Load nodes from a json file containing an array of JSON objects."""
@@ -109,7 +115,7 @@ class IOManager:
 		    start_index (int): The starting index of the documents to load.
 		    end_index (int): The ending index of the documents to load.
 		Returns:
-		    List[CleanedDocument]: A list of parsed documents.
+		    List[Node]: A list of parsed Nodes.
 		"""
 		all_nodes = []
 		for path in self.all_documents[start_index:end_index]:
@@ -129,7 +135,7 @@ class IOManager:
 		Args:
 		    parsed_documents (List[ParsedDocument]): The parsed documents to be saved.
 		"""
-		output_path = self.output_document_path.joinpath(output_folder_name)
+		output_path = self.output_document_path
 		file_id = str(uuid4())[:8]  # Generate a short unique ID for the file
 		all_nodes_json = [node.model_dump_json() for node in parsed_nodes]
 		all_nodes_file = output_path.joinpath(
