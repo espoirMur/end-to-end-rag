@@ -1,14 +1,17 @@
 import json
+import os
 from typing import Dict, List
 
 import requests
 from jinja2 import Template
 from transformers import AutoTokenizer
 
+from src.rag.schemas.generator_schemas import AnswerModel
+
 RAG_PROMPT_TEMPLATE = """
             DOCUMENTS:
             {% for document in documents %}
-             - {{document}} \n
+             - [{{ loop.index }}] {{document}} \n
             {% endfor %}
 
             QUESTION:
@@ -16,7 +19,8 @@ RAG_PROMPT_TEMPLATE = """
             INSTRUCTIONS:
             Answer the users QUESTION using the DOCUMENTS text above.
             Keep your answer ground in the facts of the DOCUMENTS.
-            If the DOCUMENTS doesn’t contain the facts to answer the QUESTION return None
+            If you can't answer based on the context say that answers is correct = False
+            When you found the question mention the document number it was found in
         """
 
 
@@ -31,10 +35,19 @@ class LLamaCppGeneratorComponent:
 		api_url: str,
 		prompt: str,
 		model_name: str = "croissantllm/CroissantLLMChat-v0.1",
+		json_schema: dict = AnswerModel.model_json_schema(),
+		lll_model_name: str = "deepseek-chat",
 	) -> None:
 		self.api_url = api_url
 		self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 		self.prompt = prompt
+		self.json_schema = json_schema
+		self.load_api_key_from_env()
+		self.lll_model_name = lll_model_name
+
+	def load_api_key_from_env(self) -> None:
+		"""Load the API key from the environment variables"""
+		self.api_key = os.getenv("DEEP_SEEK_API_KEY")
 
 	def generate_chat_input(
 		self, template_values: dict, prompt_template: str = RAG_PROMPT_TEMPLATE
@@ -42,11 +55,11 @@ class LLamaCppGeneratorComponent:
 		"""generate the prompt to be used for the chat input"""
 
 		template = Template(prompt_template)
-		prompt = template.render(**template_values)
+		rendered_prompt = template.render(**template_values)
 
 		chat_input = [
 			{"role": "system", "content": self.prompt},
-			{"role": "user", "content": prompt},
+			{"role": "user", "content": rendered_prompt},
 		]
 
 		return chat_input
@@ -63,6 +76,7 @@ class LLamaCppGeneratorComponent:
 		"""
 		headers = {
 			"Content-Type": "application/json",
+			"Authorization": f"Bearer {self.api_key}",
 		}
 
 		data = {
@@ -75,6 +89,7 @@ class LLamaCppGeneratorComponent:
 			"repeat_penalty": 1.05,
 			"stop": ["assistant", self.tokenizer.eos_token],
 			"seed": 42,
+			"json_schema": self.json_schema,
 		}
 
 		json_data = json.dumps(data)

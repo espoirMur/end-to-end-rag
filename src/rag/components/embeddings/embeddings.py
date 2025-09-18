@@ -36,7 +36,7 @@ class EmbeddingComputer:
 			show_progress_bar=True,
 			normalize_embeddings=True,
 		)
-		return embedding.tolist()
+		return embedding.tolist()[0]
 
 	def collect_node_text(self, nodes: List[Node]) -> List[str]:
 		"""Collect all nodes with text from the nodes."""

@@ -31,7 +31,7 @@ class MyDocumentParser(DocumentParserBase):
 		self.parser = DocumentParser(**document_parser_kwargs)
 		self.io_manager = io_manager
 
-	def parse_document(self, document_path: Path) -> Optional[ParsedDocument]:
+	def parse(self, document_path: Path) -> Optional[ParsedDocument]:
 		"""
 		Parse a single document and save the parsed nodes to the file system.
 

@@ -57,3 +57,8 @@ Should I continue with the application or do the evaluation?
 Honestly I don't know.. 
 
 But let us make something working and then we wil ldo the evaluation
+
+
+## Todo:
+
+Look at this for keyword search

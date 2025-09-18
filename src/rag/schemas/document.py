@@ -140,7 +140,9 @@ class Node(BaseModel):
 			# Add other fields as needed
 		}
 
-	def to_sql_insert(self, table_prefix: str) -> Dict[str, Any]:
+	def to_sql_insert(
+		self,
+	) -> Dict[str, Any]:
 		"""Convert the Node instance to a dictionary for SQL insertion."""
 		return {
 			"node_id": self.node_id,

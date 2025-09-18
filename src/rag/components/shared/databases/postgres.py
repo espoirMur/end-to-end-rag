@@ -1,6 +1,8 @@
 import contextlib
 import csv
+from collections import defaultdict
 from enum import Enum
+from itertools import groupby
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, TypeVar
 
@@ -17,6 +19,8 @@ logger = setup_logger("postgres database client")
 T = TypeVar("T")
 Vector = np.ndarray
 DEFAULT_TOKENIZER = "bert_base_uncased"
+
+DISTANCE_OPS_MAPPING = {"cosine": "<=>", "l2": "<->", "inner": "<#>"}
 
 
 class DistanceMetric(str, Enum):
@@ -105,7 +109,7 @@ class PostgresVectorDBClient:
 			cursor.execute(query)
 			logger.info(f"Table {name} created with schema: {schema}")
 
-	def create_index(
+	def create_embedding_index(
 		self,
 		table_name: str,
 		column_name: str,
@@ -137,6 +141,30 @@ class PostgresVectorDBClient:
 		)
 		with self._transaction() as cursor:
 			cursor.execute(query)
+
+	def create_full_text_index(self, table_name: str, column_name: str) -> None:
+		"""
+		Create a full-text search index on a specified column.
+
+		Args:
+		        table_name: Name of the table
+		        column_name: Name of the column to index
+		"""
+		full_text_search_column = f"full_text_search_{column_name}"
+		query = sql.SQL(
+			"CREATE INDEX {index_name} ON {table} USING GIN ({tsvector_column})"
+		).format(
+			index_name=sql.Identifier(
+				f"{self.namespace}_{table_name}_{full_text_search_column}_fts_index"
+			),
+			table=self._full_table_name(table_name),
+			tsvector_column=sql.Identifier(full_text_search_column),
+		)
+		with self._transaction() as cursor:
+			cursor.execute(query)
+			logger.info(
+				f"Full-text search index created on '{full_text_search_column}' in table '{table_name}'."
+			)
 
 	def insert(
 		self,
@@ -310,59 +338,66 @@ class PostgresVectorDBClient:
 		Returns:
 		    List of result rows
 		"""
-		distance_op = {"cosine": "<=>", "l2": "<->", "inner": "<#>"}[distance_metric]
+		distance_op = DISTANCE_OPS_MAPPING[distance_metric]
 
 		query = sql.SQL(
-			"SELECT {columns} FROM {table} ORDER BY {vector_column} {op} %s LIMIT %s"
+			"SELECT {similarity_expr} as similarity, {columns} FROM {table} ORDER BY similarity desc LIMIT {top_k}"
 		).format(
+			similarity_expr=self.distance_metrics_to_similarity_expression(
+				distance_metric
+			).format(
+				vector_column=sql.Identifier(vector_column),
+				op=sql.SQL(distance_op),
+			),
 			columns=sql.SQL(", ").join(map(sql.Identifier, return_columns)),
 			table=self._full_table_name(table_name),
 			vector_column=sql.Identifier(vector_column),
 			op=sql.SQL(distance_op),
+			top_k=sql.Literal(top_k),
 		)
-
 		with self._transaction() as cursor:
 			if probe:
 				cursor.execute(
 					sql.SQL("SET LOCAL vchordrq.probes = %s").format(), (probe,)
 				)
-			cursor.execute(query, (query_vector, top_k))
+			cursor.execute(query, {"query_embedding": query_vector})
 			return cursor.fetchall()
 
-	def search_by_keyword(
+	def full_text_search(
 		self,
-		table_name: str,
-		text_column: str,
 		query_text: str,
-		return_columns: Sequence[str],
-		tokenizer: str = DEFAULT_TOKENIZER,
-		top_k: int = 10,
-	) -> List[Tuple[Any, ...]]:
+		max_results: int,
+		return_columns: List[str],
+		column_name: str = "content",
+		table_name: str = "documents",
+	):
 		"""
-		Perform a full-text search using BM25.
-
+		Perform a full-text search on the specified table and column.
 		Args:
-		    table_name: Name of the table
-		    text_column: Name of the text column to search
-		    query_text: Text query
-		    return_columns: Columns to return in results
-		    tokenizer: Tokenizer to use
-		    top_k: Number of results to return
-
+		query_text: The search query string
+		max_results: Maximum number of results to return
+		column_name: The column to search (default: "content")
+		table_name: The table to search (default: "documents")
 		Returns:
-		    List of result rows
+		List of result rows
 		"""
+		full_text_search_column = f"full_text_search_{column_name}"
 		query = sql.SQL(
-			"SELECT {columns} FROM {table} ORDER BY {text_column} <&> "
-			"to_bm25query(%s, tokenize(%s, %s)) LIMIT %s"
+			"""
+		SELECT  ts_rank_cd({full_text_search_column}, websearch_to_tsquery(%(query_text)s)) as full_text_score, {columns}
+		FROM {table}
+		WHERE {full_text_search_column} @@ websearch_to_tsquery(%(query_text)s)
+		ORDER BY full_text_score DESC
+		LIMIT %(max_results)s
+		"""
 		).format(
-			columns=sql.SQL(", ").join(map(sql.Identifier, return_columns)),
 			table=self._full_table_name(table_name),
-			text_column=sql.Identifier(text_column),
+			full_text_search_column=sql.Identifier(full_text_search_column),
+			columns=sql.SQL(", ").join(map(sql.Identifier, return_columns)),
 		)
-
+		params = {"query_text": query_text, "max_results": max_results}
 		with self._transaction() as cursor:
-			cursor.execute(query, (text_column, query_text, tokenizer, top_k))
+			cursor.execute(query, params)
 			return cursor.fetchall()
 
 	def close(self) -> None:
@@ -485,3 +520,176 @@ class PostgresVectorDBClient:
 		with self._transaction() as cursor:
 			cursor.execute(query)
 			logger.info(f"Constraint '{constraint_name}' dropped from '{table_name}'.")
+
+	def add_text_search_field(self, table_name: str, column_name: str):
+		"""
+		Add a tsvector column for full-text search.
+		Args:
+		    table_name: Name of the table
+		    column_name: The column to generate the tsvector from
+		"""
+		# Create the full column name for the tsvector field
+		full_text_search_column = f"full_text_search_{column_name}"
+
+		query = sql.SQL(
+			"ALTER TABLE {table} ADD COLUMN {tsvector_column} tsvector GENERATED ALWAYS AS (to_tsvector('english', {content_column})) STORED"
+		).format(
+			table=self._full_table_name(table_name),
+			tsvector_column=sql.Identifier(full_text_search_column),
+			content_column=sql.Identifier(column_name),
+		)
+
+		with self._transaction() as cursor:
+			print(query.as_string(cursor))
+			cursor.execute(query)
+			logger.info(
+				f"Column '{full_text_search_column}' added to '{table_name}' for full-text search."
+			)
+
+	def search_many_by_vector(
+		self,
+		table_name: str,
+		vector_column: str,
+		query_vectors: List[List[float]],
+		return_columns: Sequence[str],
+		distance_metric: DistanceMetric = DistanceMetric.COSINE,
+		candidate_limit: int = 10,
+		probe: Optional[int] = None,
+	) -> List[Tuple[Any, ...]]:
+		"""
+		Perform multiple vector similarity searches using LATERAL JOIN for efficiency.
+		Args:
+		    table_name: Name of the table
+		    vector_column: Name of the vector column
+		    query_vectors: List of query vectors (n x m)
+		    return_columns: Columns to return in results
+		    distance_metric: One of "cosine", "l2", or "inner"
+		    candidate_limit: Number of candidates to consider per query
+		    probe: Number of probes for approximate search
+
+		Returns:
+		    List of result rows (one per query vector)
+		"""
+		distance_op = DISTANCE_OPS_MAPPING[distance_metric]
+
+		if distance_metric == DistanceMetric.COSINE:
+			# Cosine similarity (1 - distance)
+			similarity_expr = "(1 - ({vector_column} {op} qv.query_vector::vector))"
+		elif distance_metric == DistanceMetric.INNER_PRODUCT:
+			# Inner product similarity: negate the pgvector operator result
+			# to get the positive inner product value.
+			similarity_expr = "(-({vector_column} {op} qv.query_vector::vector))"
+		else:  # L2
+			# L2 similarity: a common way to turn distance into similarity
+			similarity_expr = "(1 / (1 + {vector_column} {op} qv.query_vector::vector))"
+
+		array_constructor, params = self.convert_array_to_pg_vectors(query_vectors)
+
+		query = sql.SQL(
+			f"""
+            SELECT
+                results.*,
+                qv.idx as query_index
+            FROM
+                unnest({array_constructor}) WITH ORDINALITY AS qv(query_vector, idx)
+            CROSS JOIN LATERAL (
+                SELECT
+                    {{similarity}} as similarity,
+                    {{columns}}
+                FROM {{table}}
+                ORDER BY similarity desc
+                LIMIT {candidate_limit}
+            ) AS results
+            ORDER BY qv.idx, results.similarity DESC
+        """
+		).format(
+			similarity=sql.SQL(
+				similarity_expr.format(
+					# Use quotes to prevent issues with reserved keywords
+					vector_column='"{}"'.format(vector_column),
+					op=distance_op,
+				)
+			),
+			columns=sql.SQL(", ").join(map(sql.Identifier, return_columns)),
+			return_columns=sql.SQL(", ").join(map(sql.Identifier, return_columns)),
+			table=self._full_table_name(table_name),
+			candidate_limit=sql.Literal(candidate_limit),
+			vector_column=sql.Identifier(vector_column),
+			op=sql.SQL(distance_op),
+		)
+
+		with self._transaction() as cursor:
+			if probe:
+				cursor.execute(sql.SQL("SET LOCAL vchordrq.probes = %s"), (probe,))
+			print(query.as_string(cursor))
+			cursor.execute(f"explain analyze {query.as_string(cursor)}", params)
+			results = cursor.fetchall()
+
+			return self._extract_top_results(results, k=candidate_limit)
+
+	def _extract_top_results(
+		self, results: List[Tuple], k: int = 1
+	) -> List[Tuple[Any, ...]]:
+		"""
+		Groups results by query and returns the top k results for each.
+
+		Args:
+		    results: A list of result rows from the database, ordered by query index
+		             and then by similarity. Each row is (similarity, column1, ..., query_index).
+		    num_queries: The total number of query vectors.
+		    k: The number of top results to return for each query.
+
+		Returns:
+		    A flattened list of the top k result rows for all queries.
+		"""
+		if not results:
+			return []
+
+		# Use a defaultdict to group results by their query index
+		grouped_results = defaultdict(list)
+		for index, group in groupby(results, key=lambda x: x[-1]):
+			grouped_results[index] = list(group)[:k]
+		return grouped_results
+
+	def distance_metrics_to_similarity_expression(self, distance_metric: str) -> str:
+		if distance_metric == DistanceMetric.COSINE:
+			similarity_expr = sql.SQL(
+				"(1 - ({vector_column} {op} %(query_embedding)s::vector))"
+			)
+		elif distance_metric == DistanceMetric.INNER_PRODUCT:
+			similarity_expr = sql.SQL(
+				"({vector_column} {op}%(query_embedding)s::vector)"
+			)
+		else:  # L2 - convert distance to similarity
+			similarity_expr = sql.SQL(
+				"(1 / (1 + {vector_column} {op} %(query_embedding)s::vector))"
+			)
+		return similarity_expr
+
+	def convert_array_to_pg_vectors(
+		self, query_vectors: List[List[float]]
+	) -> Tuple[List[str], Dict[str, str]]:
+		"""
+		convert a list of list to PostgresQL array format
+
+		It return the vector placeholder in this format:
+
+		'        array_constructor = f"ARRAY[{', '.join(vector_placeholders)}]"
+		and parameters like this:
+		vector_1:vector: values
+		vector_2:vector: values
+		...
+		vector_n:vector:    values
+		"""
+
+		vector_placeholders = []
+		params = {}
+		for i, vector in enumerate(query_vectors):
+			param_name = f"vector_{i}::vector"
+
+			vector_string = "[" + ",".join(str(float(x)) for x in vector) + "]"
+			vector_placeholders.append(f"%({param_name})s")
+			params[param_name] = vector_string
+		array_constructor = f"ARRAY[{', '.join(vector_placeholders)}]"
+
+		return array_constructor, params
