@@ -7,10 +7,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, TypeVar
 
 import numpy as np
+from injector import inject
 from pgvector.psycopg import register_vector
 from psycopg import Connection, sql
 from psycopg.pq import TransactionStatus
+from psycopg.rows import dict_row
 
+from src.rag.components.shared.databases.base import BaseDatabaseClient
 from src.shared.logger import setup_logger
 
 logger = setup_logger("postgres database client")
@@ -31,9 +34,10 @@ class DistanceMetric(str, Enum):
 	INNER_PRODUCT = "inner"
 
 
-class PostgresVectorDBClient:
+class PostgresVectorDBClient(BaseDatabaseClient):
 	"""An improved PostgreSQL client with vector search capabilities."""
 
+	@inject
 	def __init__(
 		self,
 		namespace: str,
@@ -72,11 +76,11 @@ class PostgresVectorDBClient:
 	def _transaction(self):
 		"""Context manager for database transactions."""
 		if self.connection.info.transaction_status != TransactionStatus.IDLE:
-			yield self.connection.cursor()
+			yield self.connection.cursor(row_factory=dict_row)
 			return
 
 		with self.connection.transaction():
-			yield self.connection.cursor()
+			yield self.connection.cursor(row_factory=dict_row)
 
 	def _full_table_name(self, name: str) -> sql.Identifier:
 		"""Get the fully qualified table name with namespace."""
@@ -693,3 +697,14 @@ class PostgresVectorDBClient:
 		array_constructor = f"ARRAY[{', '.join(vector_placeholders)}]"
 
 		return array_constructor, params
+
+	def search(self, query_vector: List[float], top_k: int = 5) -> List[Dict]:
+		"""retrieve the top k documents from the database given the query"""
+		return self.search_by_vector(
+			table_name="nodes",
+			vector_column="embedding",
+			query_vector=np.array(query_vector),
+			return_columns=["node_id", "document_id", "text", "bbox"],
+			top_k=top_k,
+			distance_metric=DistanceMetric.COSINE,
+		)

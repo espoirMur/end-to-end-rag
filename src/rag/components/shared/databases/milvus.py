@@ -1,9 +1,10 @@
 from typing import Dict, List
 
-from injector import inject, singleton
+from injector import inject
 from pymilvus import DataType, MilvusClient
 from pymilvus.orm.collection import CollectionSchema
 
+from rag.components.shared.databases.base import BaseDatabaseClient
 from rag.components.shared.databases.settings import MilvusSettings
 from src.rag.schemas.document import Node
 from src.shared.logger import setup_logger
@@ -11,8 +12,7 @@ from src.shared.logger import setup_logger
 logger = setup_logger("milvus_database")
 
 
-@singleton
-class MilvusDatabase:
+class MilvusDatabase(BaseDatabaseClient):
 	@inject
 	def __init__(self, milvus_settings: MilvusSettings):
 		"""This initializes the Milvus database client."""

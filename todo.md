@@ -62,3 +62,14 @@ But let us make something working and then we wil ldo the evaluation
 ## Todo:
 
 Look at this for keyword search
+
+### Todo: Two month later back to the project... 06/10/2025
+
+What should we do, can I check the RAG api if it is working?
+
+I remeember doing some work to hightlith the document, what is the latest on those?
+
+TODO: Come back to the dependency ingestion bits
+
+
+The dependency ingestion is working, now need to come and test again if the results make sense and then connect them to the API.
